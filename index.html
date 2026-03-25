@@ -159,27 +159,9 @@
       <div class="card">
         <div class="logo">Printfly AI Tool Registry</div>
         <h1>Share Your Tool</h1>
-        <p class="subtitle">Drop your project or paste a link. We'll publish it so anyone on the team can use it.</p>
+        <p class="subtitle">Add your tool so the team can find and use it.</p>
 
         <div id="entryChoice">
-          <div class="dropzone" id="dropzone">
-            <div class="dropzone-icon">&#128193;</div>
-            <div class="dropzone-text">Drop your project here</div>
-            <div class="dropzone-hint">Folder, files, or paste a link — we'll handle the rest</div>
-            <input type="text" id="urlInput" class="drop-url-input" placeholder="or paste a URL and hit Enter" onclick="event.stopPropagation()">
-            <input type="file" id="folderInput" webkitdirectory multiple>
-          </div>
-          <div class="url-status" id="urlStatus"></div>
-        </div>
-
-        <div class="scanning" id="scanning">
-          <div class="spinner" id="scanSpinner"></div>
-          <div class="scan-status" id="scanStatus">Scanning your project...</div>
-        </div>
-
-        <div class="results" id="results">
-          <div class="section-label" id="resultsLabel">Details</div>
-
           <div class="field">
             <label>Your Name *</label>
             <input type="text" id="ownerInput" placeholder="Who built this?">
@@ -193,22 +175,24 @@
             <textarea id="rDesc" placeholder="One or two sentences"></textarea>
           </div>
           <div class="field">
-            <label>Link to Tool</label>
-            <input type="text" id="rLink" placeholder="Auto-filled after deploy — or paste manually">
+            <label>Link *</label>
+            <input type="text" id="rLink" placeholder="ChatGPT link, GitHub repo, AI Studio, any URL">
+            <div class="url-status" id="urlStatus"></div>
           </div>
 
           <div class="more-toggle" onclick="toggleMore()">
-            <span id="moreArrow">&#9654;</span> More details <span class="more-hint">(optional)</span>
+            <span id="moreArrow">&#9654;</span> More details <span class="more-hint">(type, APIs, status — optional)</span>
           </div>
           <div class="more-fields" id="moreFields">
             <div class="row2">
               <div class="field">
                 <label>Type</label>
                 <select id="rType" class="field-select">
-                  <option value="Script">Script (Python, Node, Apps Script)</option>
+                  <option value="Other">Select...</option>
                   <option value="GPT">Custom GPT</option>
                   <option value="Claude Project">Claude Project</option>
                   <option value="AI Studio">Google AI Studio</option>
+                  <option value="Script">Script (Python, Node, Apps Script)</option>
                   <option value="Automation">Automation (Zapier, Make, n8n)</option>
                   <option value="App">Standalone App</option>
                   <option value="Integration">Integration</option>
@@ -227,7 +211,7 @@
             </div>
             <div class="field">
               <label>Use Cases</label>
-              <input type="text" id="rUseCases" placeholder="Comma-separated — how people will find it">
+              <input type="text" id="rUseCases" placeholder="Comma-separated keywords — how people will find it">
             </div>
             <div class="field">
               <label>APIs / Integrations</label>
@@ -243,17 +227,31 @@
               </select>
             </div>
             <div class="field">
-              <label>Link to Docs</label>
-              <input type="text" id="rDocs" placeholder="README, Google Doc, instructions">
+              <label>Link to Docs / README</label>
+              <input type="text" id="rDocs" placeholder="GitHub README, Google Doc, etc.">
             </div>
           </div>
 
           <div class="error-msg" id="errorMsg"></div>
           <div class="btn-row">
-            <button class="btn btn-secondary" onclick="resetRegister()">Start Over</button>
             <button class="btn btn-primary" id="submitBtn" onclick="submitTool()">Submit to Registry</button>
           </div>
+
+          <div style="text-align:center; margin-top:24px; padding-top:20px; border-top:1px solid #e2e8f0;">
+            <div class="dropzone" id="dropzone" style="padding:24px 20px; border-style:dashed;">
+              <div style="font-size:14px; font-weight:600; color:#64748b;">Have an HTML tool that needs hosting?</div>
+              <div style="font-size:13px; color:#94a3b8; margin-top:4px;">Drop the file here — we'll publish it and fill in the link above</div>
+              <input type="file" id="folderInput" webkitdirectory multiple>
+            </div>
+          </div>
         </div>
+
+        <div class="scanning" id="scanning">
+          <div class="spinner" id="scanSpinner"></div>
+          <div class="scan-status" id="scanStatus">Scanning your project...</div>
+        </div>
+
+        <div class="results" id="results" style="display:none;"></div>
 
         <div class="success" id="success">
           <div class="success-check">&#10003;</div>
@@ -559,6 +557,7 @@
     async function doDeploy(formData) {
       const statusEl = document.getElementById('scanStatus');
       const spinnerEl = document.getElementById('scanSpinner');
+      document.getElementById('scanning').style.display = 'block';
       spinnerEl.style.display = '';
       statusEl.textContent = 'Publishing your tool...';
 
@@ -572,24 +571,24 @@
           filesToDeploy.push({ path: 'index.html', content: downloadPage });
         }
 
-        const result = await deployTool(filesToDeploy, slugify(formData.name));
+        const projectSlug = slugify(formData.name || 'tool');
+        const result = await deployTool(filesToDeploy, projectSlug);
         formData.link = result.url;
 
         document.getElementById('scanning').style.display = 'none';
-        document.getElementById('resultsLabel').textContent = 'Published';
-        showForm(formData);
+        fillForm(formData);
 
       } catch (err) {
-        // Deploy not configured or failed — just show the form without a link
-        statusEl.textContent = err.message.includes('not configured')
-          ? 'Auto-deploy not set up yet — paste a link manually'
-          : 'Deploy failed: ' + err.message;
-        spinnerEl.style.display = 'none';
-        setTimeout(() => {
-          document.getElementById('scanning').style.display = 'none';
-          document.getElementById('resultsLabel').textContent = 'Detected';
-          showForm(formData);
-        }, 2000);
+        document.getElementById('scanning').style.display = 'none';
+        fillForm(formData);
+        // Show error briefly in the URL status area
+        const status = document.getElementById('urlStatus');
+        status.className = 'url-status error';
+        status.textContent = err.message.includes('not configured')
+          ? 'Auto-host not available — paste a link manually'
+          : 'Could not auto-host: ' + err.message;
+        status.style.display = 'block';
+        setTimeout(() => { status.style.display = 'none'; }, 3000);
       }
     }
 
@@ -606,10 +605,11 @@
       { p: /vercel\.app|netlify\.app|herokuapp\.com|railway\.app/i, type: 'App' },
     ];
 
-    document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') fetchFromUrl(); });
+    document.getElementById('rLink').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); fetchFromUrl(); } });
+    document.getElementById('rLink').addEventListener('blur', () => { if (document.getElementById('rLink').value.trim()) fetchFromUrl(); });
 
     async function fetchFromUrl() {
-      const url = document.getElementById('urlInput').value.trim();
+      const url = document.getElementById('rLink').value.trim();
       if (!url) return;
       const status = document.getElementById('urlStatus');
 
@@ -630,7 +630,9 @@
           const resp = await fetch('https://api.github.com/repos/' + githubPath);
           if (!resp.ok) throw new Error('Could not access repo (may be private)');
           const repo = await resp.json();
-          status.style.display = 'none';
+          status.className = 'url-status loading';
+          status.textContent = 'Auto-filled from GitHub';
+          setTimeout(() => { status.style.display = 'none'; }, 2000);
 
           const topics = (repo.topics || []).join(' ').toLowerCase();
           let toolType = 'Script';
@@ -638,7 +640,7 @@
           if (/automation|zapier|n8n/i.test(topics)) toolType = 'Automation';
           if (/gpt|openai/i.test(topics)) toolType = 'GPT';
 
-          showForm({
+          fillForm({
             name: prettify(repo.name || ''),
             desc: repo.description || '',
             link: repo.homepage || repo.html_url,
@@ -650,31 +652,39 @@
         } catch (err) {
           status.className = 'url-status error';
           status.textContent = err.message;
-          setTimeout(() => { status.style.display = 'none'; showForm({ name: prettify(nameFromUrl(url)), link: url, type: 'Script' }); }, 1500);
+          setTimeout(() => { status.style.display = 'none'; }, 1500);
         }
         return;
       }
 
-      // Non-GitHub URL — it IS the tool
-      const suggestedName = prettify(nameFromUrl(url));
-      showForm({ name: suggestedName, link: url, type: platform || 'Other' });
-      if (!suggestedName) setTimeout(() => document.getElementById('rName').focus(), 100);
+      // Non-GitHub URL — auto-detect type from URL pattern
+      if (platform) {
+        fillForm({ type: platform });
+        status.className = 'url-status loading';
+        status.textContent = 'Detected: ' + platform;
+        status.style.display = 'block';
+        setTimeout(() => { status.style.display = 'none'; }, 2000);
+      }
+      // Suggest a name if the name field is empty
+      const nameField = document.getElementById('rName');
+      if (!nameField.value.trim()) {
+        const suggested = prettify(nameFromUrl(url));
+        if (suggested) nameField.value = suggested;
+      }
     }
 
-    // ==================== SHOW FORM ====================
-    function showForm(opts = {}) {
-      document.getElementById('entryChoice').style.display = 'none';
-      document.getElementById('scanning').style.display = 'none';
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('rName').value = opts.name || '';
-      document.getElementById('rDesc').value = opts.desc || '';
-      document.getElementById('rType').value = opts.type || 'Other';
-      document.getElementById('rStatus').value = opts.status || 'Active';
-      document.getElementById('rUseCases').value = opts.useCases || '';
-      document.getElementById('rLink').value = opts.link || '';
-      document.getElementById('rDocs').value = opts.docs || '';
-      const manualApi = document.getElementById('rApisManual');
-      if (manualApi) manualApi.value = opts.apis || '';
+    // ==================== FILL FORM ====================
+    function fillForm(opts = {}) {
+      // Only fill fields that have values — don't overwrite what the user already typed
+      if (opts.name && !document.getElementById('rName').value.trim()) document.getElementById('rName').value = opts.name;
+      if (opts.desc && !document.getElementById('rDesc').value.trim()) document.getElementById('rDesc').value = opts.desc;
+      if (opts.type) document.getElementById('rType').value = opts.type;
+      if (opts.status) document.getElementById('rStatus').value = opts.status;
+      if (opts.useCases && !document.getElementById('rUseCases').value.trim()) document.getElementById('rUseCases').value = opts.useCases;
+      if (opts.link) document.getElementById('rLink').value = opts.link;
+      if (opts.docs && !document.getElementById('rDocs').value.trim()) document.getElementById('rDocs').value = opts.docs;
+      if (opts.apis) { const el = document.getElementById('rApisManual'); if (el && !el.value.trim()) el.value = opts.apis; }
+      // Auto-expand "more details" if we filled those fields
       if (opts.type || opts.useCases || opts.docs) {
         document.getElementById('moreFields').classList.add('open');
         document.getElementById('moreArrow').style.transform = 'rotate(90deg)';
@@ -725,7 +735,6 @@
 
     // ==================== SCAN & ANALYZE ====================
     async function scanFiles(files) {
-      document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('scanning').style.display = 'block';
       document.getElementById('scanSpinner').style.display = '';
       document.getElementById('scanStatus').textContent = 'Scanning your project...';
@@ -754,12 +763,14 @@
 
       const formData = analyzeProject(textFiles, files.map(f => f._path || f.webkitRelativePath || f.name));
 
-      // Auto-deploy if we have files — worker handles auth
+      // Fill the form with detected info
+      fillForm(formData);
+
+      // Auto-deploy if we have deployable files
       if (allFiles.length > 0) {
         await doDeploy(formData);
       } else {
         document.getElementById('scanning').style.display = 'none';
-        showForm(formData);
       }
     }
 
@@ -844,7 +855,7 @@
       .then(r => r.json())
       .then(res => {
         if (res.status === 'success') {
-          document.getElementById('results').style.display = 'none';
+          document.getElementById('entryChoice').style.display = 'none';
           const link = payload.linkToTool;
           const msg = document.getElementById('successMsg');
           msg.innerHTML = link
@@ -865,12 +876,22 @@
     function resetRegister() {
       document.getElementById('entryChoice').style.display = '';
       document.getElementById('scanning').style.display = 'none';
-      document.getElementById('results').style.display = 'none';
       document.getElementById('success').style.display = 'none';
       document.getElementById('submitBtn').disabled = false;
       document.getElementById('submitBtn').textContent = 'Submit to Registry';
-      document.getElementById('urlInput').value = '';
+      document.getElementById('rName').value = '';
+      document.getElementById('rDesc').value = '';
+      document.getElementById('rLink').value = '';
+      document.getElementById('rType').value = 'Other';
+      document.getElementById('rStatus').value = 'Active';
+      document.getElementById('rUseCases').value = '';
+      document.getElementById('rDocs').value = '';
+      const apiEl = document.getElementById('rApisManual'); if (apiEl) apiEl.value = '';
+      document.getElementById('rCredAccess').value = '';
+      document.getElementById('moreFields').classList.remove('open');
+      document.getElementById('moreArrow').style.transform = '';
       document.getElementById('folderInput').value = '';
+      document.getElementById('errorMsg').style.display = 'none';
       allFiles = [];
       pendingFormData = null;
     }
