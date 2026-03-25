@@ -106,6 +106,18 @@
     .search-bar input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; font-family: inherit; }
     .search-bar input:focus { border-color: #2563eb; }
 
+    /* URL entry */
+    .url-entry { margin-bottom: 0; }
+    .url-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .url-row { display: flex; gap: 8px; }
+    .url-input { flex: 1; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+    .url-input:focus { border-color: #2563eb; }
+    .url-btn { flex-shrink: 0; padding: 11px 20px; }
+    .url-hint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+    .url-status { font-size: 13px; margin-top: 8px; display: none; padding: 8px 12px; border-radius: 8px; }
+    .url-status.loading { display: block; background: #f0f9ff; color: #2563eb; }
+    .url-status.error { display: block; background: #fef2f2; color: #dc2626; }
+
     /* Manual entry */
     .or-divider { text-align: center; margin: 16px 0; color: #94a3b8; font-size: 13px; position: relative; }
     .or-divider::before, .or-divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #e2e8f0; }
@@ -150,10 +162,20 @@
         <p class="subtitle">Add your tool to the company registry so others can find and use it.</p>
 
         <div id="entryChoice">
+          <div class="url-entry">
+            <label class="url-label">Paste a link to your tool</label>
+            <div class="url-row">
+              <input type="text" id="urlInput" class="url-input" placeholder="GitHub repo, ChatGPT link, AI Studio, Zapier, any URL...">
+              <button class="btn btn-primary url-btn" onclick="fetchFromUrl()">Go</button>
+            </div>
+            <div class="url-hint">GitHub repos auto-fill details. Other links detect the platform.</div>
+            <div class="url-status" id="urlStatus"></div>
+          </div>
+          <div class="or-divider"><span>or</span></div>
           <div class="dropzone" id="dropzone">
             <div class="dropzone-icon">&#128193;</div>
             <div class="dropzone-text">Drop your project folder here</div>
-            <div class="dropzone-hint">or click to browse — best for local scripts, Node/Python projects, etc.</div>
+            <div class="dropzone-hint">or click to browse — for local code projects</div>
             <input type="file" id="folderInput" webkitdirectory multiple>
           </div>
           <div class="or-divider"><span>or</span></div>
@@ -161,7 +183,7 @@
             <span class="btn-manual-icon">&#9998;</span>
             <span>
               <strong>Register manually</strong>
-              <small>For GPTs, AI Studio, Zapier, deployed apps, or anything without a local folder</small>
+              <small>No link or folder? Just fill in the fields.</small>
             </span>
           </button>
         </div>
@@ -172,7 +194,7 @@
         </div>
 
         <div class="results" id="results">
-          <div class="section-label">Detected</div>
+          <div class="section-label" id="resultsLabel">Details</div>
 
           <div class="field">
             <label>Your Name</label>
@@ -355,6 +377,119 @@
       ));
     }
 
+    // ==================== REGISTER: URL FETCH ====================
+    const PLATFORM_PATTERNS = [
+      { p: /github\.com\/([^\/]+\/[^\/\?#]+)/i, type: 'github' },
+      { p: /chat\.openai\.com\/g\//i, type: 'GPT' },
+      { p: /chatgpt\.com\/g\//i, type: 'GPT' },
+      { p: /aistudio\.google\.com/i, type: 'AI Studio' },
+      { p: /claude\.ai\/project/i, type: 'Claude Project' },
+      { p: /zapier\.com/i, type: 'Automation' },
+      { p: /make\.com|integromat\.com/i, type: 'Automation' },
+      { p: /n8n\.(io|cloud)/i, type: 'Automation' },
+      { p: /vercel\.app|netlify\.app|herokuapp\.com|railway\.app/i, type: 'App' },
+    ];
+
+    document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') fetchFromUrl(); });
+
+    async function fetchFromUrl() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) return;
+
+      const status = document.getElementById('urlStatus');
+
+      // Detect platform
+      let platform = null;
+      let githubPath = null;
+      for (const pp of PLATFORM_PATTERNS) {
+        const m = url.match(pp.p);
+        if (m) {
+          if (pp.type === 'github') { platform = 'github'; githubPath = m[1].replace(/\.git$/, ''); }
+          else { platform = pp.type; }
+          break;
+        }
+      }
+
+      if (platform === 'github' && githubPath) {
+        // Auto-pull from GitHub API
+        status.className = 'url-status loading';
+        status.style.display = 'block';
+        status.textContent = 'Fetching repo details...';
+
+        try {
+          const resp = await fetch('https://api.github.com/repos/' + githubPath);
+          if (!resp.ok) throw new Error('Could not access repo (may be private)');
+          const repo = await resp.json();
+
+          document.getElementById('entryChoice').style.display = 'none';
+          document.getElementById('results').style.display = 'block';
+          document.getElementById('uploadToggle').style.display = 'none';
+          document.getElementById('apiLabel').style.display = 'block';
+          status.style.display = 'none';
+
+          // Fill fields from GitHub API
+          const prettyName = (repo.name || '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          document.getElementById('rName').value = prettyName;
+          document.getElementById('rDesc').value = repo.description || '';
+          document.getElementById('rLink').value = repo.html_url || url;
+          document.getElementById('rLink').placeholder = '';
+          document.getElementById('rDocs').value = repo.has_wiki ? repo.html_url + '/wiki' : (repo.html_url + '#readme');
+
+          // Detect type from language/topics
+          const lang = (repo.language || '').toLowerCase();
+          const topics = (repo.topics || []).join(' ').toLowerCase();
+          let toolType = 'Script';
+          if (/docker|webapp|app/i.test(topics)) toolType = 'App';
+          if (/automation|zapier|n8n/i.test(topics)) toolType = 'Automation';
+          if (/gpt|openai/i.test(topics)) toolType = 'GPT';
+          document.getElementById('rType').value = toolType;
+
+          document.getElementById('rStatus').value = repo.archived ? 'Deprecated' : 'Active';
+          document.getElementById('rUseCases').value = (repo.topics || []).join(', ');
+
+          // Manual API input for GitHub-sourced tools
+          const apiList = document.getElementById('apiList');
+          apiList.innerHTML = '<div class="field"><label>APIs / Integrations</label><input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank"></div>';
+          allFiles = [];
+          detected = { apis: [], apiAccess: {} };
+
+        } catch (err) {
+          status.className = 'url-status error';
+          status.textContent = err.message + ' — try dropping the folder instead, or register manually.';
+
+          // Fall through to manual with URL pre-filled
+          setTimeout(() => {
+            startManual();
+            document.getElementById('rLink').value = url;
+            document.getElementById('rType').value = 'Script';
+            status.style.display = 'none';
+          }, 2000);
+        }
+        return;
+      }
+
+      // Non-GitHub URL — detect platform and go to manual form
+      document.getElementById('entryChoice').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('uploadToggle').style.display = 'none';
+      document.getElementById('rName').value = '';
+      document.getElementById('rDesc').value = '';
+      document.getElementById('rType').value = platform || 'Other';
+      document.getElementById('rStatus').value = 'Active';
+      document.getElementById('rUseCases').value = '';
+      document.getElementById('rLink').value = url;
+      document.getElementById('rLink').placeholder = '';
+      document.getElementById('rDocs').value = '';
+      document.getElementById('apiLabel').style.display = 'block';
+      const apiList = document.getElementById('apiList');
+      apiList.innerHTML = '<div class="field"><label>APIs / Integrations</label><input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank"></div>';
+      allFiles = [];
+      detected = { apis: [], apiAccess: {} };
+
+      // Focus the name field since that's what they need to fill in
+      setTimeout(() => document.getElementById('rName').focus(), 100);
+    }
+
     // ==================== REGISTER: MANUAL MODE ====================
     function startManual() {
       document.getElementById('entryChoice').style.display = 'none';
@@ -490,6 +625,7 @@
       document.getElementById('scanning').style.display = 'none';
       document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('results').style.display = 'block';
+      document.getElementById('resultsLabel').textContent = 'Detected';
       document.getElementById('uploadToggle').style.display = 'block';
       document.getElementById('rName').value = name;
       document.getElementById('rDesc').value = description;
