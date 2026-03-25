@@ -130,6 +130,12 @@
     .btn-manual small { font-size: 12px; color: #94a3b8; }
     .field-select { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: #fff; }
     .field-select:focus { border-color: #2563eb; }
+    .more-toggle { padding: 10px 0; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; user-select: none; }
+    .more-toggle:hover { color: #2563eb; }
+    .more-hint { font-weight: 400; color: #94a3b8; }
+    .more-fields { display: none; padding-bottom: 4px; }
+    .more-fields.open { display: block; }
+    #moreArrow { font-size: 10px; display: inline-block; transition: transform 0.2s; }
 
     @media (max-width: 600px) { .page { padding: 16px 12px 40px; } .card { padding: 20px; } .row2 { grid-template-columns: 1fr; } }
   </style>
@@ -197,58 +203,66 @@
           <div class="section-label" id="resultsLabel">Details</div>
 
           <div class="field">
-            <label>Your Name</label>
+            <label>Your Name *</label>
             <input type="text" id="ownerInput" placeholder="Who built this?">
           </div>
           <div class="field">
-            <label>Tool Name</label>
-            <input type="text" id="rName">
+            <label>Tool Name *</label>
+            <input type="text" id="rName" placeholder="e.g. Order Status Bot, Quote Calculator">
           </div>
           <div class="field">
-            <label>Description</label>
-            <textarea id="rDesc"></textarea>
-          </div>
-          <div class="row2">
-            <div class="field">
-              <label>Type</label>
-              <select id="rType" class="field-select">
-                <option value="Script">Script (Python, Node, Apps Script)</option>
-                <option value="GPT">Custom GPT</option>
-                <option value="Claude Project">Claude Project</option>
-                <option value="AI Studio">Google AI Studio</option>
-                <option value="Automation">Automation (Zapier, Make, n8n)</option>
-                <option value="App">Standalone App</option>
-                <option value="Integration">Integration</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Status</label>
-              <select id="rStatus" class="field-select">
-                <option value="Active">Active</option>
-                <option value="Prototype">Prototype</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Deprecated">Deprecated</option>
-              </select>
-            </div>
+            <label>What does it do?</label>
+            <textarea id="rDesc" placeholder="One or two sentences"></textarea>
           </div>
           <div class="field">
-            <label>Use Cases</label>
-            <input type="text" id="rUseCases">
+            <label>Link</label>
+            <input type="text" id="rLink" placeholder="GitHub, ChatGPT, AI Studio, any URL">
           </div>
 
-          <div class="upload-toggle" id="uploadToggle">
-            <label><input type="checkbox" id="uploadCheck" checked> Push to GitHub so others can access it</label>
-            <div class="hint">Creates a private repo under anichols-max. Files with secrets (.env, credentials, keys) are excluded.</div>
+          <div class="more-toggle" onclick="toggleMore()">
+            <span id="moreArrow">&#9654;</span> More details <span class="more-hint">(optional)</span>
+          </div>
+          <div class="more-fields" id="moreFields">
+            <div class="row2">
+              <div class="field">
+                <label>Type</label>
+                <select id="rType" class="field-select">
+                  <option value="Script">Script (Python, Node, Apps Script)</option>
+                  <option value="GPT">Custom GPT</option>
+                  <option value="Claude Project">Claude Project</option>
+                  <option value="AI Studio">Google AI Studio</option>
+                  <option value="Automation">Automation (Zapier, Make, n8n)</option>
+                  <option value="App">Standalone App</option>
+                  <option value="Integration">Integration</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <select id="rStatus" class="field-select">
+                  <option value="Active">Active</option>
+                  <option value="Prototype">Prototype</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Deprecated">Deprecated</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Use Cases</label>
+              <input type="text" id="rUseCases" placeholder="Comma-separated — how people will find it">
+            </div>
+            <div class="field">
+              <label>APIs / Integrations</label>
+              <input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank">
+            </div>
+            <div class="field">
+              <label>Link to Docs</label>
+              <input type="text" id="rDocs" placeholder="README, Google Doc, instructions">
+            </div>
           </div>
 
-          <div class="row2">
-            <div class="field"><label>Link to Tool</label><input type="text" id="rLink" placeholder="Auto-filled if pushed to GitHub"></div>
-            <div class="field"><label>Link to Docs</label><input type="text" id="rDocs"></div>
-          </div>
-
-          <div class="section-label" id="apiLabel">APIs &amp; Access</div>
-          <div id="apiList"></div>
+          <div id="apiList" style="display:none"></div>
+          <div id="uploadToggle" style="display:none"></div>
 
           <div class="error-msg" id="errorMsg"></div>
           <div class="btn-row">
@@ -377,6 +391,43 @@
       ));
     }
 
+    // ==================== REGISTER: HELPERS ====================
+    function toggleMore() {
+      const el = document.getElementById('moreFields');
+      const arrow = document.getElementById('moreArrow');
+      el.classList.toggle('open');
+      arrow.style.transform = el.classList.contains('open') ? 'rotate(90deg)' : '';
+    }
+
+    // Restore saved owner name
+    const savedOwner = localStorage.getItem('registryOwner');
+    if (savedOwner) document.getElementById('ownerInput').value = savedOwner;
+
+    function nameFromUrl(url) {
+      try {
+        const u = new URL(url);
+        const parts = u.pathname.split('/').filter(Boolean);
+        // GitHub: owner/repo → repo name
+        if (/github\.com/i.test(u.host) && parts.length >= 2) return parts[1];
+        // ChatGPT: /g/g-xxx-slug → slug
+        if (/chatgpt\.com|chat\.openai\.com/i.test(u.host)) {
+          const last = parts[parts.length - 1] || '';
+          const slug = last.replace(/^g-[a-zA-Z0-9]+-/, '');
+          if (slug && slug !== last) return slug;
+        }
+        // Zapier: /shared/name-of-zap/xxx
+        if (/zapier\.com/i.test(u.host) && parts.length >= 2) return parts[1];
+        // Generic: last meaningful path segment
+        const last = parts[parts.length - 1] || '';
+        if (last && last.length > 3 && !/^[a-f0-9-]{20,}$/i.test(last)) return last;
+      } catch(e) {}
+      return '';
+    }
+
+    function prettify(slug) {
+      return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
     // ==================== REGISTER: URL FETCH ====================
     const PLATFORM_PATTERNS = [
       { p: /github\.com\/([^\/]+\/[^\/\?#]+)/i, type: 'github' },
@@ -421,97 +472,67 @@
           if (!resp.ok) throw new Error('Could not access repo (may be private)');
           const repo = await resp.json();
 
-          document.getElementById('entryChoice').style.display = 'none';
-          document.getElementById('results').style.display = 'block';
-          document.getElementById('uploadToggle').style.display = 'none';
-          document.getElementById('apiLabel').style.display = 'block';
           status.style.display = 'none';
-
-          // Fill fields from GitHub API
-          const prettyName = (repo.name || '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          document.getElementById('rName').value = prettyName;
-          document.getElementById('rDesc').value = repo.description || '';
-          document.getElementById('rLink').value = repo.html_url || url;
-          document.getElementById('rLink').placeholder = '';
-          document.getElementById('rDocs').value = repo.has_wiki ? repo.html_url + '/wiki' : (repo.html_url + '#readme');
-
-          // Detect type from language/topics
-          const lang = (repo.language || '').toLowerCase();
           const topics = (repo.topics || []).join(' ').toLowerCase();
           let toolType = 'Script';
           if (/docker|webapp|app/i.test(topics)) toolType = 'App';
           if (/automation|zapier|n8n/i.test(topics)) toolType = 'Automation';
           if (/gpt|openai/i.test(topics)) toolType = 'GPT';
-          document.getElementById('rType').value = toolType;
 
-          document.getElementById('rStatus').value = repo.archived ? 'Deprecated' : 'Active';
-          document.getElementById('rUseCases').value = (repo.topics || []).join(', ');
-
-          // Manual API input for GitHub-sourced tools
-          const apiList = document.getElementById('apiList');
-          apiList.innerHTML = '<div class="field"><label>APIs / Integrations</label><input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank"></div>';
-          allFiles = [];
-          detected = { apis: [], apiAccess: {} };
+          showForm({
+            name: prettify(repo.name || ''),
+            desc: repo.description || '',
+            link: repo.html_url || url,
+            docs: repo.html_url + '#readme',
+            type: toolType,
+            status: repo.archived ? 'Deprecated' : 'Active',
+            useCases: (repo.topics || []).join(', ')
+          });
 
         } catch (err) {
           status.className = 'url-status error';
           status.textContent = err.message + ' — try dropping the folder instead, or register manually.';
 
-          // Fall through to manual with URL pre-filled
           setTimeout(() => {
-            startManual();
-            document.getElementById('rLink').value = url;
-            document.getElementById('rType').value = 'Script';
             status.style.display = 'none';
-          }, 2000);
+            const slug = prettify(nameFromUrl(url));
+            showForm({ name: slug, link: url, type: 'Script' });
+          }, 1500);
         }
         return;
       }
 
-      // Non-GitHub URL — detect platform and go to manual form
-      document.getElementById('entryChoice').style.display = 'none';
-      document.getElementById('results').style.display = 'block';
-      document.getElementById('uploadToggle').style.display = 'none';
-      document.getElementById('rName').value = '';
-      document.getElementById('rDesc').value = '';
-      document.getElementById('rType').value = platform || 'Other';
-      document.getElementById('rStatus').value = 'Active';
-      document.getElementById('rUseCases').value = '';
-      document.getElementById('rLink').value = url;
-      document.getElementById('rLink').placeholder = '';
-      document.getElementById('rDocs').value = '';
-      document.getElementById('apiLabel').style.display = 'block';
-      const apiList = document.getElementById('apiList');
-      apiList.innerHTML = '<div class="field"><label>APIs / Integrations</label><input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank"></div>';
-      allFiles = [];
-      detected = { apis: [], apiAccess: {} };
-
-      // Focus the name field since that's what they need to fill in
-      setTimeout(() => document.getElementById('rName').focus(), 100);
+      // Non-GitHub URL — detect platform, extract name, go to form
+      const suggestedName = prettify(nameFromUrl(url));
+      showForm({ name: suggestedName, link: url, type: platform || 'Other' });
+      if (!suggestedName) setTimeout(() => document.getElementById('rName').focus(), 100);
     }
 
-    // ==================== REGISTER: MANUAL MODE ====================
-    function startManual() {
+    // ==================== REGISTER: SHOW FORM ====================
+    function showForm(opts = {}) {
       document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('results').style.display = 'block';
-      document.getElementById('uploadToggle').style.display = 'none';
-      document.getElementById('rName').value = '';
-      document.getElementById('rDesc').value = '';
-      document.getElementById('rType').value = 'GPT';
-      document.getElementById('rStatus').value = 'Active';
-      document.getElementById('rUseCases').value = '';
-      document.getElementById('rLink').value = '';
-      document.getElementById('rLink').placeholder = 'Paste the URL — ChatGPT link, AI Studio link, app URL, etc.';
-      document.getElementById('rDocs').value = '';
-      document.getElementById('apiLabel').style.display = 'none';
-      document.getElementById('apiList').innerHTML = '';
+      document.getElementById('rName').value = opts.name || '';
+      document.getElementById('rDesc').value = opts.desc || '';
+      document.getElementById('rType').value = opts.type || 'Other';
+      document.getElementById('rStatus').value = opts.status || 'Active';
+      document.getElementById('rUseCases').value = opts.useCases || '';
+      document.getElementById('rLink').value = opts.link || '';
+      document.getElementById('rDocs').value = opts.docs || '';
+      const manualApi = document.getElementById('rApisManual');
+      if (manualApi) manualApi.value = opts.apis || '';
       allFiles = [];
       detected = { apis: [], apiAccess: {} };
+      // Auto-open "more" section if we have extra data
+      if (opts.type || opts.useCases || opts.docs) {
+        document.getElementById('moreFields').classList.add('open');
+        document.getElementById('moreArrow').style.transform = 'rotate(90deg)';
+      }
+    }
 
-      // Show manual API input
-      const apiList = document.getElementById('apiList');
-      apiList.innerHTML = '<div class="field"><label>APIs / Integrations</label><input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank"></div>';
-      document.getElementById('apiLabel').style.display = 'block';
+    function startManual() {
+      showForm({ type: 'GPT' });
+      setTimeout(() => document.getElementById('rName').focus(), 100);
     }
 
     // ==================== REGISTER: DROP ZONE ====================
@@ -617,49 +638,18 @@
       }
 
       useCases = description ? description.split(/[,.]/).map(s => s.trim()).filter(s => s.length > 5 && s.length < 60).slice(0, 4).join(', ') : '';
-      name = name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-      detected = { apis: [...apis], apiAccess: {} };
-
-      // Render
       document.getElementById('scanning').style.display = 'none';
-      document.getElementById('entryChoice').style.display = 'none';
-      document.getElementById('results').style.display = 'block';
       document.getElementById('resultsLabel').textContent = 'Detected';
-      document.getElementById('rName').value = name;
-      document.getElementById('rDesc').value = description;
-      document.getElementById('rType').value = toolType;
-      document.getElementById('rStatus').value = status;
-      document.getElementById('rUseCases').value = useCases;
-      document.getElementById('rDocs').value = linkToDocs;
-      document.getElementById('rLink').placeholder = 'Auto-filled if pushed to GitHub';
-      document.getElementById('apiLabel').style.display = 'block';
-
-      const apiList = document.getElementById('apiList');
-      apiList.innerHTML = '';
-      if (apis.size === 0) { apiList.innerHTML = '<div style="color:#94a3b8;font-size:13px;font-style:italic">No APIs detected</div>'; }
-      else {
-        apis.forEach(api => {
-          detected.apiAccess[api] = { mode: 'per-user', instructions: '' };
-          const id = api.replace(/\W/g, '');
-          const div = document.createElement('div'); div.className = 'api-item';
-          div.innerHTML = `<div class="api-item-name">${api}</div>
-            <div class="api-toggle">
-              <button onclick="setApi(this,'${api}','shared')">Shared key</button>
-              <button class="sel" onclick="setApi(this,'${api}','per-user')">Per-user</button>
-            </div>
-            <div class="api-instr" id="instr-${id}"><input type="text" placeholder="How to get access (e.g. 'Ask in #it-help')" oninput="detected.apiAccess['${api}'].instructions=this.value"></div>`;
-          apiList.appendChild(div);
-        });
-      }
-    }
-
-    function setApi(btn, api, mode) {
-      btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('sel'));
-      btn.classList.add('sel');
-      detected.apiAccess[api].mode = mode;
-      const el = document.getElementById('instr-' + api.replace(/\W/g, ''));
-      el.style.display = mode === 'per-user' ? 'block' : 'none';
+      showForm({
+        name: prettify(name),
+        desc: description,
+        type: toolType,
+        status: status,
+        useCases: useCases,
+        docs: linkToDocs,
+        apis: [...apis].join(', ')
+      });
     }
 
     // ==================== REGISTER: SUBMIT ====================
@@ -670,21 +660,15 @@
       if (!toolName) { document.getElementById('rName').style.borderColor = '#dc2626'; document.getElementById('rName').focus(); return; }
       if (!owner) { document.getElementById('ownerInput').style.borderColor = '#dc2626'; document.getElementById('ownerInput').focus(); return; }
 
+      // Remember owner for next time
+      localStorage.setItem('registryOwner', owner);
+
       btn.disabled = true;
       btn.textContent = 'Submitting...';
       document.getElementById('errorMsg').style.display = 'none';
 
-      let apiStr = '';
       const manualApis = document.getElementById('rApisManual');
-      if (manualApis) {
-        apiStr = manualApis.value.trim();
-      } else {
-        apiStr = detected.apis.map(api => {
-          const info = detected.apiAccess[api] || {};
-          if (info.mode === 'shared') return api + ' (shared)';
-          return info.instructions ? api + ' (per-user: ' + info.instructions + ')' : api + ' (per-user)';
-        }).join(', ');
-      }
+      const apiStr = manualApis ? manualApis.value.trim() : '';
 
       const payload = {
         toolName: toolName,
