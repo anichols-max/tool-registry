@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Your AI Tool — Printfly</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 540px; width: 100%; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 40px; }
+    .logo { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: #64748b; font-size: 15px; margin-bottom: 32px; }
+    .progress { display: flex; gap: 4px; margin-bottom: 32px; }
+    .progress-dot { height: 4px; flex: 1; border-radius: 2px; background: #e2e8f0; transition: background 0.3s; }
+    .progress-dot.active { background: #2563eb; }
+    .progress-dot.done { background: #2563eb; }
+    .step { display: none; }
+    .step.active { display: block; }
+    .step-number { font-size: 13px; font-weight: 600; color: #2563eb; margin-bottom: 8px; }
+    .question { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    .hint { font-size: 14px; color: #64748b; margin-bottom: 20px; }
+    label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #475569; }
+    input[type="text"], input[type="url"], textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; outline: none; }
+    input:focus, textarea:focus { border-color: #2563eb; }
+    textarea { resize: vertical; min-height: 80px; }
+    .options { display: flex; flex-direction: column; gap: 8px; }
+    .option { padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-size: 15px; transition: all 0.2s; }
+    .option:hover { border-color: #2563eb; background: #f0f5ff; }
+    .option.selected { border-color: #2563eb; background: #eff6ff; font-weight: 500; }
+    .btn-row { display: flex; gap: 12px; margin-top: 28px; }
+    .btn { padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-primary { background: #2563eb; color: #fff; flex: 1; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-back { background: #f1f5f9; color: #475569; }
+    .btn-back:hover { background: #e2e8f0; }
+    .api-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .api-item h4 { font-size: 15px; margin-bottom: 8px; }
+    .api-choice { display: flex; gap: 8px; margin-bottom: 8px; }
+    .api-choice button { padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .api-choice button:hover { border-color: #2563eb; }
+    .api-choice button.selected { border-color: #2563eb; background: #eff6ff; font-weight: 600; }
+    .api-instructions { margin-top: 8px; display: none; }
+    .api-instructions input { font-size: 14px; padding: 10px 12px; }
+    .review-table { width: 100%; font-size: 14px; }
+    .review-table td { padding: 8px 0; vertical-align: top; border-bottom: 1px solid #f1f5f9; }
+    .review-table td:first-child { font-weight: 600; color: #64748b; width: 120px; padding-right: 12px; }
+    .success { text-align: center; padding: 20px 0; }
+    .success-icon { font-size: 48px; margin-bottom: 16px; }
+    .success h2 { font-size: 22px; margin-bottom: 8px; }
+    .success p { color: #64748b; font-size: 15px; }
+    .success a { color: #2563eb; text-decoration: none; font-weight: 500; }
+    .error-msg { background: #fef2f2; color: #dc2626; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-top: 16px; display: none; }
+    @media (max-width: 600px) { .container { padding: 12px; } .card { padding: 24px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="logo">Printfly AI Tool Registry</div>
+      <h1>Register Your Tool</h1>
+      <p class="subtitle">Takes about 2 minutes. Every tool counts.</p>
+
+      <div class="progress" id="progress"></div>
+
+      <!-- Step 1: Name -->
+      <div class="step active" data-step="0">
+        <div class="step-number">Step 1 of 10</div>
+        <div class="question">What's your tool called?</div>
+        <div class="hint">A short name — like "Order Status Bot" or "Quote Calculator"</div>
+        <input type="text" id="toolName" placeholder="My Tool Name" autofocus>
+      </div>
+
+      <!-- Step 2: Your Name -->
+      <div class="step" data-step="1">
+        <div class="step-number">Step 2 of 10</div>
+        <div class="question">What's your name?</div>
+        <div class="hint">So people know who to talk to about this tool.</div>
+        <input type="text" id="owner" placeholder="Your name">
+      </div>
+
+      <!-- Step 3: Description -->
+      <div class="step" data-step="2">
+        <div class="step-number">Step 3 of 10</div>
+        <div class="question">What does it do?</div>
+        <div class="hint">A sentence or two, like you're explaining it to a coworker.</div>
+        <textarea id="description" placeholder="It monitors Shopify orders and flags delays in Slack..."></textarea>
+      </div>
+
+      <!-- Step 4: Type -->
+      <div class="step" data-step="3">
+        <div class="step-number">Step 4 of 10</div>
+        <div class="question">What kind of tool is it?</div>
+        <div class="hint">Pick the closest match.</div>
+        <div class="options" id="typeOptions">
+          <div class="option" data-value="GPT">Custom GPT</div>
+          <div class="option" data-value="Claude Project">Claude Project</div>
+          <div class="option" data-value="Script">Script (Python, Apps Script, etc.)</div>
+          <div class="option" data-value="Automation">Automation (Zapier, Make, n8n)</div>
+          <div class="option" data-value="App">Standalone App</div>
+          <div class="option" data-value="Integration">Integration (connects two systems)</div>
+          <div class="option" data-value="Other">Something else</div>
+        </div>
+      </div>
+
+      <!-- Step 5: Use Cases -->
+      <div class="step" data-step="4">
+        <div class="step-number">Step 5 of 10</div>
+        <div class="question">What problems does it solve?</div>
+        <div class="hint">List a few, separated by commas. This is how people will find your tool.</div>
+        <textarea id="useCases" placeholder="order tracking, delay alerts, customer service"></textarea>
+      </div>
+
+      <!-- Step 6: APIs -->
+      <div class="step" data-step="5">
+        <div class="step-number">Step 6 of 10</div>
+        <div class="question">Does it connect to any services?</div>
+        <div class="hint">Type the names separated by commas. Leave blank if none.</div>
+        <input type="text" id="apis" placeholder="Shopify, Slack, Google Sheets, OpenAI...">
+      </div>
+
+      <!-- Step 7: API Access (dynamic) -->
+      <div class="step" data-step="6">
+        <div class="step-number">Step 6b of 10</div>
+        <div class="question">How should people access these services?</div>
+        <div class="hint">For each one, choose whether to share your credentials or have people get their own.</div>
+        <div id="apiAccessList"></div>
+      </div>
+
+      <!-- Step 8: Status -->
+      <div class="step" data-step="7">
+        <div class="step-number">Step 7 of 10</div>
+        <div class="question">What's the status?</div>
+        <div class="options" id="statusOptions">
+          <div class="option" data-value="Active">Active — in use and working</div>
+          <div class="option" data-value="Prototype">Prototype — works but still rough</div>
+          <div class="option" data-value="In Progress">In Progress — still building it</div>
+          <div class="option" data-value="Deprecated">Deprecated — not using it anymore</div>
+        </div>
+      </div>
+
+      <!-- Step 9: Links -->
+      <div class="step" data-step="8">
+        <div class="step-number">Step 8 of 10</div>
+        <div class="question">Got any links?</div>
+        <div class="hint">Optional — but helpful if someone wants to use your tool.</div>
+        <label>Link to the tool</label>
+        <input type="url" id="linkToTool" placeholder="https://..." style="margin-bottom: 16px;">
+        <label>Link to documentation</label>
+        <input type="url" id="linkToDocs" placeholder="https://...">
+      </div>
+
+      <!-- Step 10: Review -->
+      <div class="step" data-step="9">
+        <div class="step-number">Step 10 of 10</div>
+        <div class="question">Here's your entry</div>
+        <div class="hint">Look good? Hit submit to add it to the registry.</div>
+        <table class="review-table" id="reviewTable"></table>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <!-- Success -->
+      <div class="step" data-step="10">
+        <div class="success">
+          <div class="success-icon">&#10003;</div>
+          <h2>You're in the registry!</h2>
+          <p>Your tool has been registered. <a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View the registry</a></p>
+        </div>
+      </div>
+
+      <div class="btn-row" id="btnRow">
+        <button class="btn btn-back" id="btnBack" style="display:none;" onclick="prevStep()">Back</button>
+        <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbytTME1cBXHzYQY_iixkNn9aKeeeXBE-2LqDfflc1oY6VLLtnqhSHIUECcSkVfrck4q/exec';
+    const TOTAL_STEPS = 10;
+
+    let current = 0;
+    let data = { type: '', status: '', apiAccess: {} };
+
+    // Build progress dots
+    const progress = document.getElementById('progress');
+    for (let i = 0; i < TOTAL_STEPS; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+      progress.appendChild(dot);
+    }
+
+    // Option click handlers
+    document.querySelectorAll('.options').forEach(group => {
+      group.querySelectorAll('.option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          group.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          if (group.id === 'typeOptions') data.type = opt.dataset.value;
+          if (group.id === 'statusOptions') data.status = opt.dataset.value;
+        });
+      });
+    });
+
+    // Enter key advances
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        nextStep();
+      }
+    });
+
+    function val(id) { return document.getElementById(id).value.trim(); }
+
+    function nextStep() {
+      // Validation
+      if (current === 0 && !val('toolName')) return shake('toolName');
+      if (current === 1 && !val('owner')) return shake('owner');
+      if (current === 2 && !val('description')) return shake('description');
+      if (current === 3 && !data.type) return;
+      if (current === 4 && !val('useCases')) return shake('useCases');
+      if (current === 7 && !data.status) return;
+
+      // Build API access step
+      if (current === 5) {
+        const apis = val('apis');
+        if (!apis) {
+          current = 6; // skip API access step
+        } else {
+          buildApiAccess(apis);
+        }
+      }
+
+      // Review step
+      if (current === 8) buildReview();
+
+      // Submit
+      if (current === 9) { submit(); return; }
+
+      current++;
+      showStep();
+    }
+
+    function prevStep() {
+      if (current === 0) return;
+      // Skip API access step going back if no APIs
+      if (current === 7 && !val('apis')) current = 6;
+      current--;
+      showStep();
+    }
+
+    function showStep() {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.querySelector(`[data-step="${current}"]`).classList.add('active');
+
+      // Progress
+      document.querySelectorAll('.progress-dot').forEach((dot, i) => {
+        dot.className = 'progress-dot' + (i < current ? ' done' : '') + (i === current ? ' active' : '');
+      });
+
+      // Buttons
+      document.getElementById('btnBack').style.display = current > 0 && current < 10 ? '' : 'none';
+      const btn = document.getElementById('btnNext');
+      if (current === 9) { btn.textContent = 'Submit'; }
+      else if (current === 10) { document.getElementById('btnRow').style.display = 'none'; }
+      else { btn.textContent = 'Next'; }
+
+      // Focus first input
+      const step = document.querySelector(`[data-step="${current}"]`);
+      const input = step.querySelector('input, textarea');
+      if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function shake(id) {
+      const el = document.getElementById(id);
+      el.style.borderColor = '#dc2626';
+      el.focus();
+      setTimeout(() => el.style.borderColor = '#e2e8f0', 1500);
+    }
+
+    function buildApiAccess(apis) {
+      const list = document.getElementById('apiAccessList');
+      list.innerHTML = '';
+      apis.split(',').map(a => a.trim()).filter(Boolean).forEach(api => {
+        const div = document.createElement('div');
+        div.className = 'api-item';
+        div.innerHTML = `
+          <h4>${api}</h4>
+          <div class="api-choice">
+            <button onclick="setApiAccess(this, '${api}', 'shared')">Shared key — everyone uses the same</button>
+            <button onclick="setApiAccess(this, '${api}', 'per-user')">Per-user — each person gets their own</button>
+          </div>
+          <div class="api-instructions" id="instructions-${api.replace(/\W/g,'')}">
+            <input type="text" placeholder="How do people get access? (e.g., 'Ask in #it-help' or 'Settings > API keys')"
+                   onchange="data.apiAccess['${api}'].instructions = this.value">
+          </div>
+        `;
+        list.appendChild(div);
+        data.apiAccess[api] = { mode: '', instructions: '' };
+      });
+    }
+
+    function setApiAccess(btn, api, mode) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      data.apiAccess[api].mode = mode;
+      const instrEl = document.getElementById('instructions-' + api.replace(/\W/g,''));
+      if (mode === 'per-user') {
+        instrEl.style.display = 'block';
+        instrEl.querySelector('input').focus();
+      } else {
+        instrEl.style.display = 'none';
+      }
+    }
+
+    function buildReview() {
+      const apis = val('apis');
+      let apiDisplay = apis || '—';
+      if (apis && Object.keys(data.apiAccess).length) {
+        apiDisplay = Object.entries(data.apiAccess).map(([name, info]) => {
+          if (info.mode === 'shared') return name + ' (shared)';
+          if (info.mode === 'per-user') return name + ' (per-user' + (info.instructions ? ': ' + info.instructions : '') + ')';
+          return name;
+        }).join(', ');
+      }
+
+      const fields = [
+        ['Tool Name', val('toolName')],
+        ['Owner', val('owner')],
+        ['Description', val('description')],
+        ['Type', data.type],
+        ['Use Cases', val('useCases')],
+        ['APIs', apiDisplay],
+        ['Status', data.status],
+        ['Link to Tool', val('linkToTool') || '—'],
+        ['Docs', val('linkToDocs') || '—'],
+      ];
+
+      document.getElementById('reviewTable').innerHTML = fields.map(
+        ([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`
+      ).join('');
+    }
+
+    function submit() {
+      const btn = document.getElementById('btnNext');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      document.getElementById('errorMsg').style.display = 'none';
+
+      const apis = val('apis');
+      let apiStr = apis;
+      if (apis && Object.keys(data.apiAccess).length) {
+        apiStr = Object.entries(data.apiAccess).map(([name, info]) => {
+          if (info.mode === 'shared') return name + ' (shared)';
+          if (info.mode === 'per-user') return name + ' (per-user' + (info.instructions ? ': ' + info.instructions : '') + ')';
+          return name;
+        }).join(', ');
+      }
+
+      const payload = {
+        toolName: val('toolName'),
+        owner: val('owner'),
+        description: val('description'),
+        useCases: val('useCases'),
+        type: data.type,
+        apis: apiStr,
+        scopes: '',
+        status: data.status,
+        linkToTool: val('linkToTool'),
+        linkToDocs: val('linkToDocs'),
+        forkOf: ''
+      };
+
+      fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.status === 'success') {
+          current = 10;
+          showStep();
+        } else {
+          throw new Error(res.message || 'Submission failed');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+        const errEl = document.getElementById('errorMsg');
+        errEl.textContent = 'Something went wrong: ' + err.message + '. Try again or add your tool directly to the sheet.';
+        errEl.style.display = 'block';
+      });
+    }
+  </script>
+</body>
+</html>
