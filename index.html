@@ -29,12 +29,22 @@
     .dropzone-icon { font-size: 36px; margin-bottom: 10px; color: #94a3b8; }
     .dropzone-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
     .dropzone-hint { font-size: 13px; color: #94a3b8; }
-    .dropzone input { display: none; }
+    .dropzone input[type=file] { display: none; }
 
     /* Scanning */
-    .scanning { text-align: center; padding: 44px 0; display: none; }
+    .scanning { text-align: center; padding: 44px 20px; display: none; }
     .spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .scan-status { color: #64748b; font-size: 14px; }
+    .gh-connect { text-align: left; max-width: 400px; margin: 20px auto 0; display: none; }
+    .gh-connect p { font-size: 14px; margin-bottom: 10px; color: #1e293b; font-weight: 500; }
+    .gh-connect-row { display: flex; gap: 8px; }
+    .gh-connect-row input { flex: 1; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; }
+    .gh-connect-row input:focus { border-color: #2563eb; }
+    .gh-connect-hint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+    .gh-connect-hint a { color: #2563eb; }
+    .gh-skip { font-size: 12px; color: #94a3b8; margin-top: 10px; cursor: pointer; text-decoration: underline; }
+    .gh-skip:hover { color: #64748b; }
 
     /* Results */
     .results { display: none; }
@@ -42,27 +52,10 @@
     .section-label:first-child { margin-top: 0; }
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 3px; }
-    .field-value { font-size: 14px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
     .field input, .field textarea { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
     .field input:focus, .field textarea:focus { border-color: #2563eb; }
     .field textarea { resize: vertical; min-height: 56px; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* API items */
-    .api-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-    .api-item-name { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
-    .api-toggle { display: flex; gap: 6px; }
-    .api-toggle button { padding: 5px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 12px; cursor: pointer; transition: all 0.15s; }
-    .api-toggle button:hover { border-color: #2563eb; }
-    .api-toggle button.sel { border-color: #2563eb; background: #eff6ff; font-weight: 600; }
-    .api-instr { margin-top: 6px; display: none; }
-    .api-instr input { width: 100%; padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: 12px; outline: none; }
-
-    /* Upload toggle */
-    .upload-toggle { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px; margin: 16px 0; display: none; }
-    .upload-toggle label { font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-    .upload-toggle input[type=checkbox] { width: 18px; height: 18px; accent-color: #2563eb; }
-    .upload-toggle .hint { font-size: 12px; color: #64748b; margin-top: 4px; margin-left: 26px; }
 
     /* Buttons */
     .btn-row { display: flex; gap: 10px; margin-top: 24px; }
@@ -118,6 +111,8 @@
     .tool-action-claude:hover { background: #b45309; }
     .tool-action-aistudio { background: #4285f4; color: #fff; }
     .tool-action-aistudio:hover { background: #1a73e8; }
+    .tool-action-download { background: #6366f1; color: #fff; }
+    .tool-action-download:hover { background: #4f46e5; }
     .tool-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; font-size: 12px; color: #94a3b8; }
     .tool-footer span { display: flex; align-items: center; gap: 4px; }
     .tool-footer a { color: #64748b; text-decoration: none; }
@@ -178,7 +173,7 @@
       <div class="card">
         <div class="logo">Printfly AI Tool Registry</div>
         <h1>Register Your Tool</h1>
-        <p class="subtitle">Add your tool to the company registry so others can find and use it.</p>
+        <p class="subtitle">Add your tool so others can find and use it.</p>
 
         <div id="entryChoice">
           <div class="dropzone" id="dropzone">
@@ -192,8 +187,17 @@
         </div>
 
         <div class="scanning" id="scanning">
-          <div class="spinner"></div>
-          <div style="color:#64748b">Scanning your project...</div>
+          <div class="spinner" id="scanSpinner"></div>
+          <div class="scan-status" id="scanStatus">Scanning your project...</div>
+          <div class="gh-connect" id="ghConnect">
+            <p>To publish this so others can use it, connect GitHub:</p>
+            <div class="gh-connect-row">
+              <input type="text" id="ghTokenInput" placeholder="Paste your GitHub token">
+              <button onclick="saveTokenAndContinue()" class="btn btn-primary" style="flex:none;padding:9px 16px;">Connect</button>
+            </div>
+            <div class="gh-connect-hint"><a href="https://github.com/settings/tokens/new?scopes=repo&description=Printfly+Tool+Registry" target="_blank">Get a token here</a> — check the "repo" scope</div>
+            <div class="gh-skip" onclick="skipGitHub()">Skip — I'll add a link myself</div>
+          </div>
         </div>
 
         <div class="results" id="results">
@@ -262,9 +266,6 @@
             </div>
           </div>
 
-          <div id="apiList" style="display:none"></div>
-          <div id="uploadToggle" style="display:none"></div>
-
           <div class="error-msg" id="errorMsg"></div>
           <div class="btn-row">
             <button class="btn btn-secondary" onclick="resetRegister()">Start Over</button>
@@ -288,6 +289,7 @@
   <script>
     const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwYC68I0nijE4kHvP3OlEOFTu42oaHgbSb9I6phUDIEvB2ScHJ2PfyPGh9SJoGSvPWU/exec';
     const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/gviz/tq?tqx=out:csv&sheet=Registry';
+    const GH_ORG = 'anichols-max';
 
     const API_PATTERNS = [
       { p: /shopify/i, n: 'Shopify API' }, { p: /slack/i, n: 'Slack API' },
@@ -305,8 +307,8 @@
       { p: /n8n/i, n: 'n8n' }, { p: /aws[-_]?sdk|amazonaws/i, n: 'AWS' },
     ];
 
-    let allFiles = []; // stored for GitHub upload
-    let detected = { apis: [], apiAccess: {} };
+    let allFiles = [];
+    let pendingFormData = null;
     let allTools = [];
 
     // ==================== TABS ====================
@@ -371,7 +373,7 @@
       return 'icon-other';
     }
 
-    function getIconEmoji(type) {
+    function getIconLetter(type) {
       const t = (type || '').toLowerCase();
       if (t.includes('gpt')) return 'G';
       if (t.includes('claude')) return 'C';
@@ -388,6 +390,15 @@
       const type = (tool.type || '').toLowerCase();
       if (!url) return '<span class="tool-action tool-action-secondary" style="opacity:0.5;cursor:default;">No link yet</span>';
 
+      // Download ZIP from GitHub
+      if (/\/archive\/refs\//.test(url) || /\.zip$/i.test(url))
+        return `<a href="${esc(url)}" class="tool-action tool-action-download">Download</a>`;
+
+      // GitHub Pages = live app
+      if (/\.github\.io/i.test(url))
+        return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open App</a>`;
+
+      // Platform-specific
       if (type.includes('gpt'))
         return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-gpt">Open in ChatGPT</a>`;
       if (type.includes('claude'))
@@ -399,7 +410,6 @@
       if (type.includes('app'))
         return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open App</a>`;
 
-      // Default: generic open
       return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open Tool</a>`;
     }
 
@@ -433,7 +443,7 @@
       el.innerHTML = tools.map(t => {
         const badgeClass = t.status === 'Active' ? 'badge-active' : t.status === 'Prototype' ? 'badge-prototype' : t.status === 'In Progress' ? 'badge-progress' : 'badge-deprecated';
         const iconClass = getIconClass(t.type);
-        const iconText = getIconEmoji(t.type);
+        const iconText = getIconLetter(t.type);
         const actionBtn = getActionButton(t);
         const isGitHub = /github\.com/i.test(t.docs);
         const useCases = t.useCases ? t.useCases.split(',').map(u => `<span class="tool-tag">${u.trim()}</span>`).join('') : '';
@@ -500,17 +510,13 @@
       try {
         const u = new URL(url);
         const parts = u.pathname.split('/').filter(Boolean);
-        // GitHub: owner/repo → repo name
         if (/github\.com/i.test(u.host) && parts.length >= 2) return parts[1];
-        // ChatGPT: /g/g-xxx-slug → slug
         if (/chatgpt\.com|chat\.openai\.com/i.test(u.host)) {
           const last = parts[parts.length - 1] || '';
           const slug = last.replace(/^g-[a-zA-Z0-9]+-/, '');
           if (slug && slug !== last) return slug;
         }
-        // Zapier: /shared/name-of-zap/xxx
         if (/zapier\.com/i.test(u.host) && parts.length >= 2) return parts[1];
-        // Generic: last meaningful path segment
         const last = parts[parts.length - 1] || '';
         if (last && last.length > 3 && !/^[a-f0-9-]{20,}$/i.test(last)) return last;
       } catch(e) {}
@@ -519,6 +525,165 @@
 
     function prettify(slug) {
       return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function slugify(name) {
+      return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 60) || 'tool';
+    }
+
+    // ==================== GITHUB: TOKEN & UPLOAD ====================
+    function getGHToken() { return localStorage.getItem('ghToken') || ''; }
+    function saveGHToken(t) { localStorage.setItem('ghToken', t); }
+
+    function toBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      return btoa(Array.from(bytes, b => String.fromCodePoint(b)).join(''));
+    }
+
+    async function pushToGitHub(files, repoName) {
+      const token = getGHToken();
+      const h = { 'Authorization': 'token ' + token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' };
+
+      // Create repo (public so anyone can download/view)
+      let resp = await fetch('https://api.github.com/user/repos', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ name: repoName, private: false, auto_init: true, description: 'Shared via Printfly AI Tool Registry' })
+      });
+
+      if (!resp.ok) {
+        if (resp.status === 422) {
+          // Repo name taken — add suffix
+          repoName = repoName + '-' + Date.now().toString(36);
+          resp = await fetch('https://api.github.com/user/repos', {
+            method: 'POST', headers: h,
+            body: JSON.stringify({ name: repoName, private: false, auto_init: true, description: 'Shared via Printfly AI Tool Registry' })
+          });
+          if (!resp.ok) throw new Error('Could not create repo');
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.message || 'GitHub API error (' + resp.status + ')');
+        }
+      }
+
+      const repo = await resp.json();
+      const owner = repo.owner.login;
+
+      // Wait for GitHub to initialize the repo
+      await new Promise(r => setTimeout(r, 1500));
+
+      // Get latest commit SHA
+      const refResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/ref/heads/main`, { headers: h });
+      if (!refResp.ok) throw new Error('Repo not ready — try again');
+      const ref = await refResp.json();
+      const latestSha = ref.object.sha;
+
+      // Get base tree
+      const commitResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/commits/${latestSha}`, { headers: h });
+      const commitData = await commitResp.json();
+      const baseTreeSha = commitData.tree.sha;
+
+      // Create blobs for each file
+      const treeItems = [];
+      for (const file of files) {
+        const blobResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/blobs`, {
+          method: 'POST', headers: h,
+          body: JSON.stringify({ content: toBase64(file.content), encoding: 'base64' })
+        });
+        if (!blobResp.ok) continue;
+        const blob = await blobResp.json();
+        treeItems.push({ path: file.path, mode: '100644', type: 'blob', sha: blob.sha });
+      }
+
+      if (!treeItems.length) throw new Error('No files to upload');
+
+      // Create tree
+      const treeResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/trees`, {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
+      });
+      const tree = await treeResp.json();
+
+      // Create commit
+      const newCommitResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/commits`, {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ message: 'Upload via Printfly AI Tool Registry', tree: tree.sha, parents: [latestSha] })
+      });
+      const newCommit = await newCommitResp.json();
+
+      // Update branch ref
+      await fetch(`https://api.github.com/repos/${owner}/${repoName}/git/refs/heads/main`, {
+        method: 'PATCH', headers: h,
+        body: JSON.stringify({ sha: newCommit.sha })
+      });
+
+      // If project has index.html, enable GitHub Pages
+      const hasIndex = files.some(f => /^index\.html$/i.test(f.path));
+      let pagesUrl = '';
+      if (hasIndex) {
+        try {
+          const pagesResp = await fetch(`https://api.github.com/repos/${owner}/${repoName}/pages`, {
+            method: 'POST', headers: h,
+            body: JSON.stringify({ source: { branch: 'main', path: '/' } })
+          });
+          if (pagesResp.ok) {
+            pagesUrl = `https://${owner}.github.io/${repoName}/`;
+          }
+        } catch(e) {}
+      }
+
+      return {
+        repoUrl: repo.html_url,
+        pagesUrl: pagesUrl,
+        downloadUrl: `https://github.com/${owner}/${repoName}/archive/refs/heads/main.zip`
+      };
+    }
+
+    async function doGitHubUpload(formData) {
+      const statusEl = document.getElementById('scanStatus');
+      const spinnerEl = document.getElementById('scanSpinner');
+      spinnerEl.style.display = '';
+      statusEl.textContent = 'Publishing to GitHub...';
+      document.getElementById('ghConnect').style.display = 'none';
+
+      try {
+        const repoName = slugify(formData.name || 'tool');
+        const result = await pushToGitHub(allFiles, repoName);
+
+        // HTML project → Pages URL is the "tool link", otherwise download ZIP
+        if (result.pagesUrl) {
+          formData.link = result.pagesUrl;
+        } else {
+          formData.link = result.downloadUrl;
+        }
+        formData.repo = result.repoUrl;
+        formData.docs = result.repoUrl;
+
+        document.getElementById('scanning').style.display = 'none';
+        document.getElementById('resultsLabel').textContent = 'Published';
+        showForm(formData);
+      } catch (err) {
+        // Upload failed — still show form, user can add link manually
+        statusEl.textContent = 'GitHub upload failed: ' + err.message;
+        spinnerEl.style.display = 'none';
+        setTimeout(() => {
+          document.getElementById('scanning').style.display = 'none';
+          document.getElementById('resultsLabel').textContent = 'Detected';
+          showForm(formData);
+        }, 2000);
+      }
+    }
+
+    function saveTokenAndContinue() {
+      const token = document.getElementById('ghTokenInput').value.trim();
+      if (!token) return;
+      saveGHToken(token);
+      if (pendingFormData) doGitHubUpload(pendingFormData);
+    }
+
+    function skipGitHub() {
+      document.getElementById('scanning').style.display = 'none';
+      document.getElementById('resultsLabel').textContent = 'Detected';
+      if (pendingFormData) showForm(pendingFormData);
     }
 
     // ==================== REGISTER: URL FETCH ====================
@@ -542,7 +707,6 @@
 
       const status = document.getElementById('urlStatus');
 
-      // Detect platform
       let platform = null;
       let githubPath = null;
       for (const pp of PLATFORM_PATTERNS) {
@@ -555,7 +719,6 @@
       }
 
       if (platform === 'github' && githubPath) {
-        // Auto-pull from GitHub API
         status.className = 'url-status loading';
         status.style.display = 'block';
         status.textContent = 'Fetching repo details...';
@@ -572,12 +735,15 @@
           if (/automation|zapier|n8n/i.test(topics)) toolType = 'Automation';
           if (/gpt|openai/i.test(topics)) toolType = 'GPT';
 
+          // If repo has a homepage, that's the tool link. Otherwise use download ZIP.
+          const toolLink = repo.homepage || `https://github.com/${githubPath}/archive/refs/heads/${repo.default_branch || 'main'}.zip`;
+
           showForm({
             name: prettify(repo.name || ''),
             desc: repo.description || '',
-            link: repo.homepage || '',  // GitHub "Website" field = the actual tool URL
+            link: toolLink,
             repo: repo.html_url || url,
-            docs: repo.html_url + '#readme',
+            docs: repo.html_url,
             type: toolType,
             status: repo.archived ? 'Deprecated' : 'Active',
             useCases: (repo.topics || []).join(', ')
@@ -585,8 +751,7 @@
 
         } catch (err) {
           status.className = 'url-status error';
-          status.textContent = err.message + ' — try dropping the folder instead, or register manually.';
-
+          status.textContent = err.message + ' — try dropping the folder instead.';
           setTimeout(() => {
             status.style.display = 'none';
             const slug = prettify(nameFromUrl(url));
@@ -596,7 +761,7 @@
         return;
       }
 
-      // Non-GitHub URL — detect platform, extract name, go to form
+      // Non-GitHub URL — it's the tool itself
       const suggestedName = prettify(nameFromUrl(url));
       showForm({ name: suggestedName, link: url, type: platform || 'Other' });
       if (!suggestedName) setTimeout(() => document.getElementById('rName').focus(), 100);
@@ -605,6 +770,7 @@
     // ==================== REGISTER: SHOW FORM ====================
     function showForm(opts = {}) {
       document.getElementById('entryChoice').style.display = 'none';
+      document.getElementById('scanning').style.display = 'none';
       document.getElementById('results').style.display = 'block';
       document.getElementById('rName').value = opts.name || '';
       document.getElementById('rDesc').value = opts.desc || '';
@@ -613,7 +779,6 @@
       document.getElementById('rUseCases').value = opts.useCases || '';
       document.getElementById('rLink').value = opts.link || '';
       document.getElementById('rDocs').value = opts.docs || '';
-      // Repo field
       if (opts.repo) {
         document.getElementById('rRepo').value = opts.repo;
         document.getElementById('repoField').style.display = 'block';
@@ -623,25 +788,20 @@
       }
       const manualApi = document.getElementById('rApisManual');
       if (manualApi) manualApi.value = opts.apis || '';
-      allFiles = [];
-      detected = { apis: [], apiAccess: {} };
-      // Auto-open "more" section if we have extra data
       if (opts.type || opts.useCases || opts.docs) {
         document.getElementById('moreFields').classList.add('open');
         document.getElementById('moreArrow').style.transform = 'rotate(90deg)';
       }
     }
 
-    function startManual() {
-      showForm({ type: 'GPT' });
-      setTimeout(() => document.getElementById('rName').focus(), 100);
-    }
-
     // ==================== REGISTER: DROP ZONE ====================
     const dropzone = document.getElementById('dropzone');
     const folderInput = document.getElementById('folderInput');
 
-    dropzone.addEventListener('click', () => folderInput.click());
+    dropzone.addEventListener('click', (e) => {
+      if (e.target.id === 'urlInput') return;
+      folderInput.click();
+    });
     dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
     dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); handleDrop(e.dataTransfer.items); });
@@ -665,21 +825,22 @@
       });
     }
 
-    // ==================== REGISTER: SCAN ====================
+    // ==================== REGISTER: SCAN & ANALYZE ====================
     async function scanFiles(files) {
       document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('scanning').style.display = 'block';
+      document.getElementById('scanSpinner').style.display = '';
+      document.getElementById('scanStatus').textContent = 'Scanning your project...';
+      document.getElementById('ghConnect').style.display = 'none';
 
       const textFiles = {};
       allFiles = [];
 
       for (const f of files) {
         const path = f._path || f.webkitRelativePath || f.name;
-        // Remove top-level folder prefix for cleaner paths
         const cleanPath = path.includes('/') ? path.substring(path.indexOf('/') + 1) : path;
         const name = path.split('/').pop();
 
-        // Skip sensitive files, node_modules, .git
         if (/node_modules|\.git\/|__pycache__|\.DS_Store/i.test(path)) continue;
         if (/^\.env$|\.pem$|credentials\.json$|\.key$|\.p12$/i.test(name)) continue;
 
@@ -694,19 +855,38 @@
         }
       }
 
-      analyze(textFiles, files.map(f => f._path || f.webkitRelativePath || f.name));
+      // Analyze the project
+      const formData = analyzeProject(textFiles, files.map(f => f._path || f.webkitRelativePath || f.name));
+
+      // If we have files to upload, push to GitHub
+      if (allFiles.length > 0) {
+        const token = getGHToken();
+        if (token) {
+          // Token exists — upload automatically
+          await doGitHubUpload(formData);
+        } else {
+          // No token — ask for it
+          document.getElementById('scanSpinner').style.display = 'none';
+          document.getElementById('scanStatus').textContent = 'Project scanned!';
+          document.getElementById('ghConnect').style.display = 'block';
+          pendingFormData = formData;
+        }
+      } else {
+        // No files to upload — just show form
+        document.getElementById('scanning').style.display = 'none';
+        document.getElementById('resultsLabel').textContent = 'Detected';
+        showForm(formData);
+      }
     }
 
-    function analyze(textFiles, fileNames) {
+    function analyzeProject(textFiles, fileNames) {
       const allContent = Object.values(textFiles).join('\n');
       let name = '', description = '', toolType = '', status = 'Prototype', useCases = '', linkToDocs = '';
       const apis = new Set();
 
-      // Folder name
       const topFolder = fileNames[0] ? fileNames[0].split('/')[0] : '';
       name = topFolder || 'Untitled Tool';
 
-      // package.json
       const pkgPath = Object.keys(textFiles).find(p => p.endsWith('package.json') && p.split('/').length <= 3);
       if (pkgPath) {
         try {
@@ -726,6 +906,10 @@
       if (allContent.match(/zapier|make\.com|integromat|n8n/i)) toolType = toolType || 'Automation';
       if (fileNames.some(f => /gpt.*config|system.*prompt|instructions\.md/i.test(f))) toolType = toolType || 'GPT';
       if (fileNames.some(f => /docker/i.test(f))) toolType = toolType || 'App';
+
+      // If has index.html, it's an app
+      if (fileNames.some(f => /index\.html$/i.test(f))) toolType = toolType || 'App';
+
       if (!toolType) toolType = 'Script';
 
       API_PATTERNS.forEach(a => { if (a.p.test(allContent)) apis.add(a.n); });
@@ -741,9 +925,7 @@
 
       useCases = description ? description.split(/[,.]/).map(s => s.trim()).filter(s => s.length > 5 && s.length < 60).slice(0, 4).join(', ') : '';
 
-      document.getElementById('scanning').style.display = 'none';
-      document.getElementById('resultsLabel').textContent = 'Detected';
-      showForm({
+      return {
         name: prettify(name),
         desc: description,
         type: toolType,
@@ -751,7 +933,7 @@
         useCases: useCases,
         docs: linkToDocs,
         apis: [...apis].join(', ')
-      });
+      };
     }
 
     // ==================== REGISTER: SUBMIT ====================
@@ -762,7 +944,6 @@
       if (!toolName) { document.getElementById('rName').style.borderColor = '#dc2626'; document.getElementById('rName').focus(); return; }
       if (!owner) { document.getElementById('ownerInput').style.borderColor = '#dc2626'; document.getElementById('ownerInput').focus(); return; }
 
-      // Remember owner for next time
       localStorage.setItem('registryOwner', owner);
 
       btn.disabled = true;
@@ -786,9 +967,6 @@
         forkOf: ''
       };
 
-      // Don't send files to Apps Script — no UrlFetchApp permission
-      // Files stay client-side only for now
-
       fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -799,9 +977,8 @@
       .then(res => {
         if (res.status === 'success') {
           document.getElementById('results').style.display = 'none';
-          document.getElementById('uploadToggle').style.display = 'none';
           const msg = document.getElementById('successMsg');
-          msg.innerHTML = `Your tool is in the registry. <a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View registry</a>`;
+          msg.innerHTML = `Your tool is live in the registry. <a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View sheet</a>`;
           document.getElementById('success').style.display = 'block';
         } else throw new Error(res.message || 'Failed');
       })
@@ -819,14 +996,15 @@
       document.getElementById('dropzone').style.display = '';
       document.getElementById('scanning').style.display = 'none';
       document.getElementById('results').style.display = 'none';
-      document.getElementById('uploadToggle').style.display = 'none';
       document.getElementById('repoField').style.display = 'none';
       document.getElementById('success').style.display = 'none';
       document.getElementById('submitBtn').disabled = false;
       document.getElementById('submitBtn').textContent = 'Submit to Registry';
       document.getElementById('urlInput').value = '';
       document.getElementById('folderInput').value = '';
-      allFiles = []; detected = { apis: [], apiAccess: {} };
+      document.getElementById('ghConnect').style.display = 'none';
+      allFiles = [];
+      pendingFormData = null;
     }
 
     // Load browse on start
