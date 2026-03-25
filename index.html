@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Printfly AI Tool Registry</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- no external deps -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
@@ -271,6 +271,7 @@
   <script>
     const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwYC68I0nijE4kHvP3OlEOFTu42oaHgbSb9I6phUDIEvB2ScHJ2PfyPGh9SJoGSvPWU/exec';
     const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/gviz/tq?tqx=out:csv&sheet=Registry';
+    const PROXY_URL = 'https://printfly-api-proxy.printfly.workers.dev';
 
     const API_PATTERNS = [
       { p: /shopify/i, n: 'Shopify API' }, { p: /slack/i, n: 'Slack API' },
@@ -371,10 +372,9 @@
       const type = (tool.type || '').toLowerCase();
       if (!url) return '<span class="tool-action tool-action-secondary" style="opacity:0.5;cursor:default;">No link yet</span>';
 
-      // Netlify site = live tool
-      if (/netlify\.app/i.test(url))
+      // Hosted tools — Cloudflare Pages, Netlify, GitHub Pages
+      if (/pages\.dev/i.test(url) || /netlify\.app/i.test(url))
         return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open Tool</a>`;
-      // GitHub Pages = live app
       if (/\.github\.io/i.test(url))
         return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open App</a>`;
       // ZIP download
@@ -505,61 +505,17 @@
       return '';
     }
 
-    // ==================== NETLIFY DEPLOY ====================
-    function getNetlifyToken() { return localStorage.getItem('netlifyToken') || ''; }
+    // ==================== CLOUDFLARE PAGES DEPLOY ====================
 
-    async function deployToNetlify(files, projectName) {
-      const token = getNetlifyToken();
-      const h = { 'Authorization': 'Bearer ' + token };
-
-      // Build file digest (sha1 hash → path mapping)
-      const fileDigests = {};
-      const fileContents = {};
-      for (const file of files) {
-        const data = new TextEncoder().encode(file.content);
-        const hashBuf = await crypto.subtle.digest('SHA-1', data);
-        const hash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
-        fileDigests['/' + file.path] = hash;
-        fileContents[hash] = file.content;
-      }
-
-      // Create site
-      const siteResp = await fetch('https://api.netlify.com/api/v1/sites', {
+    async function deployTool(files, projectName) {
+      const resp = await fetch(PROXY_URL + '/deploy', {
         method: 'POST',
-        headers: { ...h, 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: projectName, files })
       });
-      if (!siteResp.ok) {
-        const err = await siteResp.json().catch(() => ({}));
-        throw new Error(err.message || 'Could not create site (' + siteResp.status + ')');
-      }
-      const site = await siteResp.json();
-
-      // Create deploy with file digests
-      const deployResp = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
-        method: 'POST',
-        headers: { ...h, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: fileDigests })
-      });
-      if (!deployResp.ok) throw new Error('Deploy creation failed');
-      const deploy = await deployResp.json();
-
-      // Upload required files (ones Netlify doesn't have cached)
-      const required = deploy.required || [];
-      for (const sha of required) {
-        const content = fileContents[sha];
-        if (!content) continue;
-        await fetch(`https://api.netlify.com/api/v1/deploys/${deploy.id}/files/${sha}`, {
-          method: 'PUT',
-          headers: { ...h, 'Content-Type': 'application/octet-stream' },
-          body: content
-        });
-      }
-
-      return {
-        url: deploy.ssl_url || deploy.url || `https://${site.subdomain}.netlify.app`,
-        siteId: site.id
-      };
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || 'Deploy failed');
+      return result;
     }
 
     function generateDownloadPage(name, description, files) {
@@ -605,7 +561,6 @@
       const spinnerEl = document.getElementById('scanSpinner');
       spinnerEl.style.display = '';
       statusEl.textContent = 'Publishing your tool...';
-      document.getElementById('tokenSetup').style.display = 'none';
 
       try {
         let filesToDeploy = [...allFiles];
@@ -617,7 +572,7 @@
           filesToDeploy.push({ path: 'index.html', content: downloadPage });
         }
 
-        const result = await deployToNetlify(filesToDeploy, slugify(formData.name));
+        const result = await deployTool(filesToDeploy, slugify(formData.name));
         formData.link = result.url;
 
         document.getElementById('scanning').style.display = 'none';
@@ -625,18 +580,18 @@
         showForm(formData);
 
       } catch (err) {
-        statusEl.textContent = 'Deploy failed: ' + err.message;
+        // Deploy not configured or failed — just show the form without a link
+        statusEl.textContent = err.message.includes('not configured')
+          ? 'Auto-deploy not set up yet — paste a link manually'
+          : 'Deploy failed: ' + err.message;
         spinnerEl.style.display = 'none';
         setTimeout(() => {
           document.getElementById('scanning').style.display = 'none';
           document.getElementById('resultsLabel').textContent = 'Detected';
           showForm(formData);
-        }, 2500);
+        }, 2000);
       }
     }
-
-    // Admin setup: run this once in browser console to enable auto-deploy
-    // localStorage.setItem('netlifyToken', 'your_token_here')
 
     // ==================== URL FETCH ====================
     const PLATFORM_PATTERNS = [
@@ -744,13 +699,27 @@
 
     function readEntries(entries) {
       return new Promise(resolve => {
-        const files = []; let pending = 0;
+        const files = []; let pending = 0; let settled = false;
+        function done() { if (!settled && pending === 0) { settled = true; resolve(files); } }
         function read(entry, path) {
-          if (entry.isFile) { pending++; entry.file(f => { f._path = path + f.name; files.push(f); if (--pending === 0) resolve(files); }); }
-          else if (entry.isDirectory) { pending++; entry.createReader().readEntries(subs => { for (const e of subs) read(e, path + entry.name + '/'); if (--pending === 0) resolve(files); }); }
+          if (entry.isFile) {
+            pending++;
+            entry.file(f => { f._path = path + f.name; files.push(f); pending--; done(); }, () => { pending--; done(); });
+          } else if (entry.isDirectory) {
+            pending++;
+            const reader = entry.createReader();
+            function readBatch() {
+              reader.readEntries(subs => {
+                if (subs.length === 0) { pending--; done(); return; }
+                for (const e of subs) read(e, path + entry.name + '/');
+                readBatch(); // directories may return entries in batches
+              }, () => { pending--; done(); });
+            }
+            readBatch();
+          }
         }
         for (const e of entries) read(e, '');
-        if (pending === 0) resolve(files);
+        done(); // resolve immediately if no entries
       });
     }
 
@@ -760,7 +729,6 @@
       document.getElementById('scanning').style.display = 'block';
       document.getElementById('scanSpinner').style.display = '';
       document.getElementById('scanStatus').textContent = 'Scanning your project...';
-      document.getElementById('tokenSetup').style.display = 'none';
 
       const textFiles = {};
       allFiles = [];
@@ -786,10 +754,8 @@
 
       const formData = analyzeProject(textFiles, files.map(f => f._path || f.webkitRelativePath || f.name));
 
-      // If admin has set up Netlify token (via console), auto-deploy
-      // Otherwise just show the form — user pastes their own link
-      const netlifyToken = getNetlifyToken();
-      if (allFiles.length > 0 && netlifyToken) {
+      // Auto-deploy if we have files — worker handles auth
+      if (allFiles.length > 0) {
         await doDeploy(formData);
       } else {
         document.getElementById('scanning').style.display = 'none';
