@@ -7,53 +7,77 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { max-width: 540px; width: 100%; padding: 20px; }
+    .container { max-width: 600px; width: 100%; padding: 20px; }
     .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 40px; }
     .logo { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
     h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
     .subtitle { color: #64748b; font-size: 15px; margin-bottom: 32px; }
-    .progress { display: flex; gap: 4px; margin-bottom: 32px; }
-    .progress-dot { height: 4px; flex: 1; border-radius: 2px; background: #e2e8f0; transition: background 0.3s; }
-    .progress-dot.active { background: #2563eb; }
-    .progress-dot.done { background: #2563eb; }
-    .step { display: none; }
-    .step.active { display: block; }
-    .step-number { font-size: 13px; font-weight: 600; color: #2563eb; margin-bottom: 8px; }
-    .question { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-    .hint { font-size: 14px; color: #64748b; margin-bottom: 20px; }
-    label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #475569; }
-    input[type="text"], input[type="url"], textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; outline: none; }
-    input:focus, textarea:focus { border-color: #2563eb; }
-    textarea { resize: vertical; min-height: 80px; }
-    .options { display: flex; flex-direction: column; gap: 8px; }
-    .option { padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-size: 15px; transition: all 0.2s; }
-    .option:hover { border-color: #2563eb; background: #f0f5ff; }
-    .option.selected { border-color: #2563eb; background: #eff6ff; font-weight: 500; }
+
+    /* Drop zone */
+    .dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 48px 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; }
+    .dropzone:hover, .dropzone.dragover { border-color: #2563eb; background: #eff6ff; }
+    .dropzone-icon { font-size: 40px; margin-bottom: 12px; color: #94a3b8; }
+    .dropzone-text { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+    .dropzone-hint { font-size: 13px; color: #94a3b8; }
+    .dropzone input { display: none; }
+
+    /* Scanning */
+    .scanning { text-align: center; padding: 48px 0; display: none; }
+    .scanning-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scanning-text { font-size: 15px; color: #64748b; }
+
+    /* Results */
+    .results { display: none; }
+    .section-label { font-size: 13px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; margin-top: 24px; }
+    .section-label:first-child { margin-top: 0; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+    .field-value { font-size: 15px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; min-height: 20px; }
+    .field input, .field textarea { width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 15px; font-family: inherit; outline: none; }
+    .field input:focus, .field textarea:focus { border-color: #2563eb; }
+    .field textarea { resize: vertical; min-height: 60px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* API access */
+    .api-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+    .api-item-name { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+    .api-toggle { display: flex; gap: 6px; }
+    .api-toggle button { padding: 6px 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .api-toggle button:hover { border-color: #2563eb; }
+    .api-toggle button.selected { border-color: #2563eb; background: #eff6ff; font-weight: 600; }
+    .api-instructions { margin-top: 8px; display: none; }
+    .api-instructions input { width: 100%; padding: 8px 12px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none; }
+    .api-instructions input:focus { border-color: #2563eb; }
+
+    .no-apis { color: #94a3b8; font-size: 14px; font-style: italic; }
+
+    /* Owner input */
+    .owner-prompt { display: none; margin-bottom: 24px; }
+
+    /* Buttons */
     .btn-row { display: flex; gap: 12px; margin-top: 28px; }
     .btn { padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
     .btn-primary { background: #2563eb; color: #fff; flex: 1; }
     .btn-primary:hover { background: #1d4ed8; }
     .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
-    .btn-back { background: #f1f5f9; color: #475569; }
-    .btn-back:hover { background: #e2e8f0; }
-    .api-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
-    .api-item h4 { font-size: 15px; margin-bottom: 8px; }
-    .api-choice { display: flex; gap: 8px; margin-bottom: 8px; }
-    .api-choice button { padding: 8px 14px; border: 1.5px solid #e2e8f0; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-    .api-choice button:hover { border-color: #2563eb; }
-    .api-choice button.selected { border-color: #2563eb; background: #eff6ff; font-weight: 600; }
-    .api-instructions { margin-top: 8px; display: none; }
-    .api-instructions input { font-size: 14px; padding: 10px 12px; }
-    .review-table { width: 100%; font-size: 14px; }
-    .review-table td { padding: 8px 0; vertical-align: top; border-bottom: 1px solid #f1f5f9; }
-    .review-table td:first-child { font-weight: 600; color: #64748b; width: 120px; padding-right: 12px; }
-    .success { text-align: center; padding: 20px 0; }
-    .success-icon { font-size: 48px; margin-bottom: 16px; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* Success */
+    .success { text-align: center; padding: 20px 0; display: none; }
+    .success-check { width: 56px; height: 56px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; color: #16a34a; }
     .success h2 { font-size: 22px; margin-bottom: 8px; }
     .success p { color: #64748b; font-size: 15px; }
     .success a { color: #2563eb; text-decoration: none; font-weight: 500; }
+
     .error-msg { background: #fef2f2; color: #dc2626; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-top: 16px; display: none; }
-    @media (max-width: 600px) { .container { padding: 12px; } .card { padding: 24px; } }
+
+    /* Manual fallback link */
+    .manual-link { text-align: center; margin-top: 20px; font-size: 13px; color: #94a3b8; }
+    .manual-link a { color: #64748b; }
+
+    @media (max-width: 600px) { .container { padding: 12px; } .card { padding: 24px; } .field-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -61,316 +85,380 @@
     <div class="card">
       <div class="logo">Printfly AI Tool Registry</div>
       <h1>Register Your Tool</h1>
-      <p class="subtitle">Takes about 2 minutes. Every tool counts.</p>
+      <p class="subtitle">Drop your project folder. We'll figure out the rest.</p>
 
-      <div class="progress" id="progress"></div>
-
-      <!-- Step 1: Name -->
-      <div class="step active" data-step="0">
-        <div class="step-number">Step 1 of 10</div>
-        <div class="question">What's your tool called?</div>
-        <div class="hint">A short name — like "Order Status Bot" or "Quote Calculator"</div>
-        <input type="text" id="toolName" placeholder="My Tool Name" autofocus>
+      <!-- Drop Zone -->
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">&#128193;</div>
+        <div class="dropzone-text">Drop your project folder here</div>
+        <div class="dropzone-hint">or click to browse</div>
+        <input type="file" id="folderInput" webkitdirectory multiple>
       </div>
 
-      <!-- Step 2: Your Name -->
-      <div class="step" data-step="1">
-        <div class="step-number">Step 2 of 10</div>
-        <div class="question">What's your name?</div>
-        <div class="hint">So people know who to talk to about this tool.</div>
-        <input type="text" id="owner" placeholder="Your name">
+      <!-- Scanning -->
+      <div class="scanning" id="scanning">
+        <div class="scanning-spinner"></div>
+        <div class="scanning-text">Scanning your project...</div>
       </div>
 
-      <!-- Step 3: Description -->
-      <div class="step" data-step="2">
-        <div class="step-number">Step 3 of 10</div>
-        <div class="question">What does it do?</div>
-        <div class="hint">A sentence or two, like you're explaining it to a coworker.</div>
-        <textarea id="description" placeholder="It monitors Shopify orders and flags delays in Slack..."></textarea>
-      </div>
+      <!-- Results -->
+      <div class="results" id="results">
+        <div class="section-label">Detected</div>
 
-      <!-- Step 4: Type -->
-      <div class="step" data-step="3">
-        <div class="step-number">Step 4 of 10</div>
-        <div class="question">What kind of tool is it?</div>
-        <div class="hint">Pick the closest match.</div>
-        <div class="options" id="typeOptions">
-          <div class="option" data-value="GPT">Custom GPT</div>
-          <div class="option" data-value="Claude Project">Claude Project</div>
-          <div class="option" data-value="Script">Script (Python, Apps Script, etc.)</div>
-          <div class="option" data-value="Automation">Automation (Zapier, Make, n8n)</div>
-          <div class="option" data-value="App">Standalone App</div>
-          <div class="option" data-value="Integration">Integration (connects two systems)</div>
-          <div class="option" data-value="Other">Something else</div>
+        <div class="owner-prompt" id="ownerPrompt">
+          <div class="field">
+            <label>Your name</label>
+            <input type="text" id="ownerInput" placeholder="Who built this?">
+          </div>
         </div>
-      </div>
 
-      <!-- Step 5: Use Cases -->
-      <div class="step" data-step="4">
-        <div class="step-number">Step 5 of 10</div>
-        <div class="question">What problems does it solve?</div>
-        <div class="hint">List a few, separated by commas. This is how people will find your tool.</div>
-        <textarea id="useCases" placeholder="order tracking, delay alerts, customer service"></textarea>
-      </div>
-
-      <!-- Step 6: APIs -->
-      <div class="step" data-step="5">
-        <div class="step-number">Step 6 of 10</div>
-        <div class="question">Does it connect to any services?</div>
-        <div class="hint">Type the names separated by commas. Leave blank if none.</div>
-        <input type="text" id="apis" placeholder="Shopify, Slack, Google Sheets, OpenAI...">
-      </div>
-
-      <!-- Step 7: API Access (dynamic) -->
-      <div class="step" data-step="6">
-        <div class="step-number">Step 6b of 10</div>
-        <div class="question">How should people access these services?</div>
-        <div class="hint">For each one, choose whether to share your credentials or have people get their own.</div>
-        <div id="apiAccessList"></div>
-      </div>
-
-      <!-- Step 8: Status -->
-      <div class="step" data-step="7">
-        <div class="step-number">Step 7 of 10</div>
-        <div class="question">What's the status?</div>
-        <div class="options" id="statusOptions">
-          <div class="option" data-value="Active">Active — in use and working</div>
-          <div class="option" data-value="Prototype">Prototype — works but still rough</div>
-          <div class="option" data-value="In Progress">In Progress — still building it</div>
-          <div class="option" data-value="Deprecated">Deprecated — not using it anymore</div>
+        <div class="field">
+          <label>Tool Name</label>
+          <input type="text" id="rName">
         </div>
-      </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="rDesc"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Type</label>
+            <div class="field-value" id="rType"></div>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <div class="field-value" id="rStatus"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Use Cases</label>
+          <input type="text" id="rUseCases">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Link to Tool</label>
+            <input type="text" id="rLink" placeholder="URL if deployed">
+          </div>
+          <div class="field">
+            <label>Link to Docs</label>
+            <input type="text" id="rDocs" placeholder="URL or path">
+          </div>
+        </div>
 
-      <!-- Step 9: Links -->
-      <div class="step" data-step="8">
-        <div class="step-number">Step 8 of 10</div>
-        <div class="question">Got any links?</div>
-        <div class="hint">Optional — but helpful if someone wants to use your tool.</div>
-        <label>Link to the tool</label>
-        <input type="url" id="linkToTool" placeholder="https://..." style="margin-bottom: 16px;">
-        <label>Link to documentation</label>
-        <input type="url" id="linkToDocs" placeholder="https://...">
-      </div>
+        <div class="section-label" id="apiSectionLabel">APIs &amp; Access</div>
+        <div id="apiList"></div>
 
-      <!-- Step 10: Review -->
-      <div class="step" data-step="9">
-        <div class="step-number">Step 10 of 10</div>
-        <div class="question">Here's your entry</div>
-        <div class="hint">Look good? Hit submit to add it to the registry.</div>
-        <table class="review-table" id="reviewTable"></table>
         <div class="error-msg" id="errorMsg"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="reset()">Start Over</button>
+          <button class="btn btn-primary" id="submitBtn" onclick="submit()">Submit to Registry</button>
+        </div>
       </div>
 
       <!-- Success -->
-      <div class="step" data-step="10">
-        <div class="success">
-          <div class="success-icon">&#10003;</div>
-          <h2>You're in the registry!</h2>
-          <p>Your tool has been registered. <a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View the registry</a></p>
+      <div class="success" id="success">
+        <div class="success-check">&#10003;</div>
+        <h2>Registered!</h2>
+        <p>Your tool is in the registry.<br><a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View the registry</a></p>
+        <div class="btn-row" style="justify-content:center; margin-top: 24px;">
+          <button class="btn btn-secondary" onclick="reset()">Register Another</button>
         </div>
       </div>
 
-      <div class="btn-row" id="btnRow">
-        <button class="btn btn-back" id="btnBack" style="display:none;" onclick="prevStep()">Back</button>
-        <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Next</button>
+      <div class="manual-link" id="manualLink">
+        Don't have a project folder? <a href="https://docs.google.com/forms/d/1ceuW7uPbhaRuhxZ-VDoiqIKNCOmmnNHvk7HQei-JEY4/viewform" target="_blank">Use the form instead</a>
       </div>
     </div>
   </div>
 
   <script>
     const ENDPOINT = 'https://script.google.com/macros/s/AKfycbytTME1cBXHzYQY_iixkNn9aKeeeXBE-2LqDfflc1oY6VLLtnqhSHIUECcSkVfrck4q/exec';
-    const TOTAL_STEPS = 10;
 
-    let current = 0;
-    let data = { type: '', status: '', apiAccess: {} };
+    // Known API/service patterns
+    const API_PATTERNS = [
+      { pattern: /shopify/i, name: 'Shopify API' },
+      { pattern: /slack/i, name: 'Slack API' },
+      { pattern: /openai/i, name: 'OpenAI API' },
+      { pattern: /anthropic|claude/i, name: 'Anthropic API' },
+      { pattern: /google[-_]?sheets|googleapis.*sheets/i, name: 'Google Sheets API' },
+      { pattern: /google[-_]?drive|googleapis.*drive/i, name: 'Google Drive API' },
+      { pattern: /google[-_]?analytics|googleapis.*analytics/i, name: 'Google Analytics API' },
+      { pattern: /gmail|googleapis.*gmail/i, name: 'Gmail API' },
+      { pattern: /stripe/i, name: 'Stripe API' },
+      { pattern: /twilio/i, name: 'Twilio API' },
+      { pattern: /sendgrid/i, name: 'SendGrid API' },
+      { pattern: /mailchimp/i, name: 'Mailchimp API' },
+      { pattern: /zapier/i, name: 'Zapier' },
+      { pattern: /make\.com|integromat/i, name: 'Make (Integromat)' },
+      { pattern: /firebase/i, name: 'Firebase' },
+      { pattern: /supabase/i, name: 'Supabase' },
+      { pattern: /aws[-_]?sdk|amazonaws/i, name: 'AWS' },
+      { pattern: /fal[-_.]?ai|fal\.ai/i, name: 'fal.ai' },
+      { pattern: /replicate/i, name: 'Replicate API' },
+      { pattern: /notion[-_]?api|@notionhq/i, name: 'Notion API' },
+      { pattern: /airtable/i, name: 'Airtable API' },
+      { pattern: /hubspot/i, name: 'HubSpot API' },
+      { pattern: /salesforce/i, name: 'Salesforce API' },
+      { pattern: /woocommerce/i, name: 'WooCommerce API' },
+      { pattern: /tiktok/i, name: 'TikTok API' },
+      { pattern: /meta[-_]?api|facebook[-_]?api|graph\.facebook/i, name: 'Meta/Facebook API' },
+      { pattern: /google[-_]?ads/i, name: 'Google Ads API' },
+    ];
 
-    // Build progress dots
-    const progress = document.getElementById('progress');
-    for (let i = 0; i < TOTAL_STEPS; i++) {
-      const dot = document.createElement('div');
-      dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
-      progress.appendChild(dot);
+    let detectedData = { apis: [], apiAccess: {}, envVars: [] };
+
+    // --- DROP ZONE ---
+    const dropzone = document.getElementById('dropzone');
+    const folderInput = document.getElementById('folderInput');
+
+    dropzone.addEventListener('click', () => folderInput.click());
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      handleItems(e.dataTransfer.items);
+    });
+    folderInput.addEventListener('change', () => {
+      if (folderInput.files.length) scanFiles(Array.from(folderInput.files));
+    });
+
+    async function handleItems(items) {
+      const files = [];
+      const entries = [];
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
+        if (entry) entries.push(entry);
+      }
+      if (entries.length) {
+        const allFiles = await readEntries(entries);
+        scanFiles(allFiles);
+      }
     }
 
-    // Option click handlers
-    document.querySelectorAll('.options').forEach(group => {
-      group.querySelectorAll('.option').forEach(opt => {
-        opt.addEventListener('click', () => {
-          group.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
-          opt.classList.add('selected');
-          if (group.id === 'typeOptions') data.type = opt.dataset.value;
-          if (group.id === 'statusOptions') data.status = opt.dataset.value;
-        });
+    function readEntries(entries) {
+      return new Promise(resolve => {
+        const files = [];
+        let pending = 0;
+
+        function readEntry(entry, path) {
+          if (entry.isFile) {
+            pending++;
+            entry.file(f => {
+              f._path = path + f.name;
+              files.push(f);
+              if (--pending === 0) resolve(files);
+            });
+          } else if (entry.isDirectory) {
+            pending++;
+            entry.createReader().readEntries(entries => {
+              for (const e of entries) readEntry(e, path + entry.name + '/');
+              if (--pending === 0) resolve(files);
+            });
+          }
+        }
+        for (const e of entries) readEntry(e, '');
+        if (pending === 0) resolve(files);
       });
-    });
+    }
 
-    // Enter key advances
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        nextStep();
-      }
-    });
+    // --- SCAN ---
+    async function scanFiles(files) {
+      dropzone.style.display = 'none';
+      document.getElementById('manualLink').style.display = 'none';
+      document.getElementById('scanning').style.display = 'block';
 
-    function val(id) { return document.getElementById(id).value.trim(); }
+      const textFiles = {};
+      const fileNames = files.map(f => f._path || f.webkitRelativePath || f.name);
 
-    function nextStep() {
-      // Validation
-      if (current === 0 && !val('toolName')) return shake('toolName');
-      if (current === 1 && !val('owner')) return shake('owner');
-      if (current === 2 && !val('description')) return shake('description');
-      if (current === 3 && !data.type) return;
-      if (current === 4 && !val('useCases')) return shake('useCases');
-      if (current === 7 && !data.status) return;
-
-      // Build API access step
-      if (current === 5) {
-        const apis = val('apis');
-        if (!apis) {
-          current = 6; // skip API access step
-        } else {
-          buildApiAccess(apis);
+      // Read text files
+      for (const f of files) {
+        const path = f._path || f.webkitRelativePath || f.name;
+        const name = path.split('/').pop();
+        if (f.size > 500000) continue; // skip large files
+        if (/\.(js|ts|py|gs|json|md|txt|yaml|yml|toml|env|gitignore|jsx|tsx|mjs|cjs|sh|html|css)$/i.test(name) ||
+            /^(readme|package|requirements|\.env|\.gitignore|dockerfile|makefile|claude)/i.test(name)) {
+          try {
+            textFiles[path] = await f.text();
+          } catch(e) {}
         }
       }
 
-      // Review step
-      if (current === 8) buildReview();
-
-      // Submit
-      if (current === 9) { submit(); return; }
-
-      current++;
-      showStep();
+      analyze(textFiles, fileNames);
     }
 
-    function prevStep() {
-      if (current === 0) return;
-      // Skip API access step going back if no APIs
-      if (current === 7 && !val('apis')) current = 6;
-      current--;
-      showStep();
-    }
+    function analyze(textFiles, fileNames) {
+      const allContent = Object.values(textFiles).join('\n');
+      const allPaths = fileNames.join('\n');
 
-    function showStep() {
-      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-      document.querySelector(`[data-step="${current}"]`).classList.add('active');
+      // --- Tool name: from folder name or package.json ---
+      let name = '';
+      let description = '';
+      let toolType = '';
+      let status = 'Prototype';
+      let useCases = '';
+      let linkToTool = '';
+      let linkToDocs = '';
+      let apis = new Set();
+      let envVars = [];
 
-      // Progress
-      document.querySelectorAll('.progress-dot').forEach((dot, i) => {
-        dot.className = 'progress-dot' + (i < current ? ' done' : '') + (i === current ? ' active' : '');
-      });
+      // Folder name
+      const topFolder = fileNames[0] ? fileNames[0].split('/')[0] : '';
+      name = topFolder || 'Untitled Tool';
 
-      // Buttons
-      document.getElementById('btnBack').style.display = current > 0 && current < 10 ? '' : 'none';
-      const btn = document.getElementById('btnNext');
-      if (current === 9) { btn.textContent = 'Submit'; }
-      else if (current === 10) { document.getElementById('btnRow').style.display = 'none'; }
-      else { btn.textContent = 'Next'; }
+      // package.json
+      const pkgPath = Object.keys(textFiles).find(p => p.endsWith('package.json') && p.split('/').length <= 3);
+      if (pkgPath) {
+        try {
+          const pkg = JSON.parse(textFiles[pkgPath]);
+          if (pkg.name) name = pkg.name;
+          if (pkg.description) description = pkg.description;
+          toolType = 'Script';
+          // Check deps for APIs
+          const allDeps = Object.keys(pkg.dependencies || {}).concat(Object.keys(pkg.devDependencies || {})).join(' ');
+          API_PATTERNS.forEach(p => { if (p.pattern.test(allDeps)) apis.add(p.name); });
+        } catch(e) {}
+      }
 
-      // Focus first input
-      const step = document.querySelector(`[data-step="${current}"]`);
-      const input = step.querySelector('input, textarea');
-      if (input) setTimeout(() => input.focus(), 100);
-    }
+      // requirements.txt
+      const reqPath = Object.keys(textFiles).find(p => p.endsWith('requirements.txt'));
+      if (reqPath) {
+        toolType = toolType || 'Script';
+        API_PATTERNS.forEach(p => { if (p.pattern.test(textFiles[reqPath])) apis.add(p.name); });
+      }
 
-    function shake(id) {
-      const el = document.getElementById(id);
-      el.style.borderColor = '#dc2626';
-      el.focus();
-      setTimeout(() => el.style.borderColor = '#e2e8f0', 1500);
-    }
+      // Detect type
+      if (fileNames.some(f => /\.gs$/.test(f) || /Code\.gs/.test(f) || /appsscript\.json/.test(f))) toolType = 'Script';
+      if (allContent.match(/zapier|make\.com|integromat/i)) toolType = toolType || 'Automation';
+      if (allContent.match(/n8n/i)) toolType = toolType || 'Automation';
+      if (fileNames.some(f => /gpt.*config|system.*prompt|instructions\.md/i.test(f))) toolType = toolType || 'GPT';
+      if (allContent.match(/claude.*project/i)) toolType = toolType || 'Claude Project';
+      if (fileNames.some(f => /docker/i.test(f))) toolType = toolType || 'App';
+      if (!toolType) toolType = 'Script';
 
-    function buildApiAccess(apis) {
-      const list = document.getElementById('apiAccessList');
-      list.innerHTML = '';
-      apis.split(',').map(a => a.trim()).filter(Boolean).forEach(api => {
-        const div = document.createElement('div');
-        div.className = 'api-item';
-        div.innerHTML = `
-          <h4>${api}</h4>
-          <div class="api-choice">
-            <button onclick="setApiAccess(this, '${api}', 'shared')">Shared key — everyone uses the same</button>
-            <button onclick="setApiAccess(this, '${api}', 'per-user')">Per-user — each person gets their own</button>
-          </div>
-          <div class="api-instructions" id="instructions-${api.replace(/\W/g,'')}">
-            <input type="text" placeholder="How do people get access? (e.g., 'Ask in #it-help' or 'Settings > API keys')"
-                   onchange="data.apiAccess['${api}'].instructions = this.value">
-          </div>
-        `;
-        list.appendChild(div);
-        data.apiAccess[api] = { mode: '', instructions: '' };
-      });
-    }
+      // Scan all content for APIs
+      API_PATTERNS.forEach(p => { if (p.pattern.test(allContent)) apis.add(p.name); });
 
-    function setApiAccess(btn, api, mode) {
-      const parent = btn.parentElement;
-      parent.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      data.apiAccess[api].mode = mode;
-      const instrEl = document.getElementById('instructions-' + api.replace(/\W/g,''));
-      if (mode === 'per-user') {
-        instrEl.style.display = 'block';
-        instrEl.querySelector('input').focus();
+      // Env vars
+      const envPath = Object.keys(textFiles).find(p => /\.env\.example$|\.env$/.test(p.split('/').pop()));
+      if (envPath) {
+        const lines = textFiles[envPath].split('\n');
+        lines.forEach(l => {
+          const m = l.match(/^([A-Z][A-Z0-9_]+)\s*=/);
+          if (m) envVars.push(m[1]);
+        });
+      }
+      // Also scan for process.env / os.environ references
+      const envMatches = allContent.match(/process\.env\.([A-Z][A-Z0-9_]+)/g) || [];
+      envMatches.forEach(m => { const v = m.replace('process.env.', ''); if (!envVars.includes(v)) envVars.push(v); });
+      const pyEnvMatches = allContent.match(/os\.(?:environ|getenv)\(['"](.*?)['"]\)/g) || [];
+      pyEnvMatches.forEach(m => { const v = m.match(/['"](.*?)['"]/)[1]; if (!envVars.includes(v)) envVars.push(v); });
+
+      // Status
+      if (fileNames.some(f => /deploy|\.github\/workflows|vercel|netlify/i.test(f))) status = 'Active';
+      if (allContent.match(/TODO|FIXME|HACK|WIP/)) status = 'In Progress';
+
+      // README
+      const readmePath = Object.keys(textFiles).find(p => /readme\.md$/i.test(p.split('/').pop()));
+      if (readmePath) {
+        linkToDocs = 'README.md';
+        if (!description) {
+          const lines = textFiles[readmePath].split('\n').filter(l => l.trim() && !l.startsWith('#'));
+          description = lines.slice(0, 2).join(' ').substring(0, 200);
+        }
+      }
+
+      // Use cases from description
+      useCases = description ? description.split(/[,.]/).map(s => s.trim()).filter(s => s.length > 5 && s.length < 60).slice(0, 4).join(', ') : '';
+
+      // Clean name
+      name = name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+      // Store
+      detectedData = { apis: [...apis], apiAccess: {}, envVars };
+
+      // Render
+      document.getElementById('scanning').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('ownerPrompt').style.display = 'block';
+
+      document.getElementById('rName').value = name;
+      document.getElementById('rDesc').value = description;
+      document.getElementById('rType').textContent = toolType;
+      document.getElementById('rStatus').textContent = status;
+      document.getElementById('rUseCases').value = useCases;
+      document.getElementById('rLink').value = linkToTool;
+      document.getElementById('rDocs').value = linkToDocs;
+
+      // API list
+      const apiList = document.getElementById('apiList');
+      apiList.innerHTML = '';
+      if (apis.size === 0) {
+        apiList.innerHTML = '<div class="no-apis">No APIs detected</div>';
       } else {
-        instrEl.style.display = 'none';
+        apis.forEach(api => {
+          detectedData.apiAccess[api] = { mode: 'per-user', instructions: '' };
+          const div = document.createElement('div');
+          div.className = 'api-item';
+          const safeId = api.replace(/\W/g, '');
+          div.innerHTML = `
+            <div class="api-item-name">${api}</div>
+            <div class="api-toggle">
+              <button onclick="setApi(this,'${api}','shared')">Shared key</button>
+              <button class="selected" onclick="setApi(this,'${api}','per-user')">Each person gets their own</button>
+            </div>
+            <div class="api-instructions" id="instr-${safeId}">
+              <input type="text" placeholder="How do they get access? (e.g., 'Ask in #it-help')" oninput="detectedData.apiAccess['${api}'].instructions=this.value">
+            </div>
+          `;
+          apiList.appendChild(div);
+        });
       }
     }
 
-    function buildReview() {
-      const apis = val('apis');
-      let apiDisplay = apis || '—';
-      if (apis && Object.keys(data.apiAccess).length) {
-        apiDisplay = Object.entries(data.apiAccess).map(([name, info]) => {
-          if (info.mode === 'shared') return name + ' (shared)';
-          if (info.mode === 'per-user') return name + ' (per-user' + (info.instructions ? ': ' + info.instructions : '') + ')';
-          return name;
-        }).join(', ');
-      }
-
-      const fields = [
-        ['Tool Name', val('toolName')],
-        ['Owner', val('owner')],
-        ['Description', val('description')],
-        ['Type', data.type],
-        ['Use Cases', val('useCases')],
-        ['APIs', apiDisplay],
-        ['Status', data.status],
-        ['Link to Tool', val('linkToTool') || '—'],
-        ['Docs', val('linkToDocs') || '—'],
-      ];
-
-      document.getElementById('reviewTable').innerHTML = fields.map(
-        ([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`
-      ).join('');
+    function setApi(btn, api, mode) {
+      btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      detectedData.apiAccess[api] = detectedData.apiAccess[api] || {};
+      detectedData.apiAccess[api].mode = mode;
+      const instrEl = document.getElementById('instr-' + api.replace(/\W/g, ''));
+      instrEl.style.display = mode === 'per-user' ? 'block' : 'none';
     }
 
     function submit() {
-      const btn = document.getElementById('btnNext');
+      const btn = document.getElementById('submitBtn');
       btn.disabled = true;
       btn.textContent = 'Submitting...';
       document.getElementById('errorMsg').style.display = 'none';
 
-      const apis = val('apis');
-      let apiStr = apis;
-      if (apis && Object.keys(data.apiAccess).length) {
-        apiStr = Object.entries(data.apiAccess).map(([name, info]) => {
-          if (info.mode === 'shared') return name + ' (shared)';
-          if (info.mode === 'per-user') return name + ' (per-user' + (info.instructions ? ': ' + info.instructions : '') + ')';
-          return name;
-        }).join(', ');
+      const owner = document.getElementById('ownerInput').value.trim();
+      if (!owner) {
+        document.getElementById('ownerInput').style.borderColor = '#dc2626';
+        document.getElementById('ownerInput').focus();
+        btn.disabled = false;
+        btn.textContent = 'Submit to Registry';
+        return;
       }
 
+      let apiStr = detectedData.apis.map(api => {
+        const info = detectedData.apiAccess[api] || {};
+        if (info.mode === 'shared') return api + ' (shared)';
+        if (info.instructions) return api + ' (per-user: ' + info.instructions + ')';
+        return api + ' (per-user)';
+      }).join(', ') || '';
+
       const payload = {
-        toolName: val('toolName'),
-        owner: val('owner'),
-        description: val('description'),
-        useCases: val('useCases'),
-        type: data.type,
+        toolName: document.getElementById('rName').value.trim(),
+        owner: owner,
+        description: document.getElementById('rDesc').value.trim(),
+        useCases: document.getElementById('rUseCases').value.trim(),
+        type: document.getElementById('rType').textContent.trim(),
         apis: apiStr,
         scopes: '',
-        status: data.status,
-        linkToTool: val('linkToTool'),
-        linkToDocs: val('linkToDocs'),
+        status: document.getElementById('rStatus').textContent.trim(),
+        linkToTool: document.getElementById('rLink').value.trim(),
+        linkToDocs: document.getElementById('rDocs').value.trim(),
         forkOf: ''
       };
 
@@ -383,19 +471,27 @@
       .then(r => r.json())
       .then(res => {
         if (res.status === 'success') {
-          current = 10;
-          showStep();
-        } else {
-          throw new Error(res.message || 'Submission failed');
-        }
+          document.getElementById('results').style.display = 'none';
+          document.getElementById('success').style.display = 'block';
+        } else throw new Error(res.message || 'Failed');
       })
       .catch(err => {
         btn.disabled = false;
-        btn.textContent = 'Submit';
-        const errEl = document.getElementById('errorMsg');
-        errEl.textContent = 'Something went wrong: ' + err.message + '. Try again or add your tool directly to the sheet.';
-        errEl.style.display = 'block';
+        btn.textContent = 'Submit to Registry';
+        const e = document.getElementById('errorMsg');
+        e.textContent = 'Error: ' + err.message;
+        e.style.display = 'block';
       });
+    }
+
+    function reset() {
+      document.getElementById('dropzone').style.display = '';
+      document.getElementById('manualLink').style.display = '';
+      document.getElementById('scanning').style.display = 'none';
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      document.getElementById('folderInput').value = '';
+      detectedData = { apis: [], apiAccess: {}, envVars: [] };
     }
   </script>
 </body>
