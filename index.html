@@ -33,15 +33,6 @@
     .spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .scan-status { color: #64748b; font-size: 14px; }
-    .token-setup { text-align: left; max-width: 420px; margin: 20px auto 0; display: none; }
-    .token-setup p { font-size: 14px; margin-bottom: 10px; color: #1e293b; font-weight: 500; }
-    .token-row { display: flex; gap: 8px; }
-    .token-row input { flex: 1; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; }
-    .token-row input:focus { border-color: #2563eb; }
-    .token-hint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
-    .token-hint a { color: #2563eb; }
-    .token-skip { font-size: 13px; color: #64748b; margin-top: 12px; cursor: pointer; text-decoration: underline; }
-    .token-skip:hover { color: #2563eb; }
 
     .results { display: none; }
     .section-label { font-size: 12px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 10px; }
@@ -184,15 +175,6 @@
         <div class="scanning" id="scanning">
           <div class="spinner" id="scanSpinner"></div>
           <div class="scan-status" id="scanStatus">Scanning your project...</div>
-          <div class="token-setup" id="tokenSetup">
-            <p>One-time setup — connect Netlify to publish tools:</p>
-            <div class="token-row">
-              <input type="password" id="netlifyTokenInput" placeholder="Paste your Netlify personal access token">
-              <button onclick="saveNetlifyToken()" class="btn btn-primary" style="flex:none;padding:9px 16px;">Connect</button>
-            </div>
-            <div class="token-hint"><a href="https://app.netlify.com/user/applications#personal-access-tokens" target="_blank">Get a token here</a> — click "New access token"</div>
-            <div class="token-skip" onclick="skipDeploy()">Skip for now — I'll add a link manually</div>
-          </div>
         </div>
 
         <div class="results" id="results">
@@ -653,18 +635,8 @@
       }
     }
 
-    function saveNetlifyToken() {
-      const token = document.getElementById('netlifyTokenInput').value.trim();
-      if (!token) return;
-      localStorage.setItem('netlifyToken', token);
-      if (pendingFormData) doDeploy(pendingFormData);
-    }
-
-    function skipDeploy() {
-      document.getElementById('scanning').style.display = 'none';
-      document.getElementById('resultsLabel').textContent = 'Detected';
-      if (pendingFormData) showForm(pendingFormData);
-    }
+    // Admin setup: run this once in browser console to enable auto-deploy
+    // localStorage.setItem('netlifyToken', 'your_token_here')
 
     // ==================== URL FETCH ====================
     const PLATFORM_PATTERNS = [
@@ -814,16 +786,11 @@
 
       const formData = analyzeProject(textFiles, files.map(f => f._path || f.webkitRelativePath || f.name));
 
-      if (allFiles.length > 0) {
-        const token = getNetlifyToken();
-        if (token) {
-          await doDeploy(formData);
-        } else {
-          document.getElementById('scanSpinner').style.display = 'none';
-          document.getElementById('scanStatus').textContent = 'Project scanned! Connect Netlify to publish it live:';
-          document.getElementById('tokenSetup').style.display = 'block';
-          pendingFormData = formData;
-        }
+      // If admin has set up Netlify token (via console), auto-deploy
+      // Otherwise just show the form — user pastes their own link
+      const netlifyToken = getNetlifyToken();
+      if (allFiles.length > 0 && netlifyToken) {
+        await doDeploy(formData);
       } else {
         document.getElementById('scanning').style.display = 'none';
         showForm(formData);
@@ -938,7 +905,6 @@
       document.getElementById('submitBtn').textContent = 'Submit to Registry';
       document.getElementById('urlInput').value = '';
       document.getElementById('folderInput').value = '';
-      document.getElementById('tokenSetup').style.display = 'none';
       allFiles = [];
       pendingFormData = null;
     }
