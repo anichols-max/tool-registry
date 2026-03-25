@@ -106,6 +106,19 @@
     .search-bar input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; font-family: inherit; }
     .search-bar input:focus { border-color: #2563eb; }
 
+    /* Manual entry */
+    .or-divider { text-align: center; margin: 16px 0; color: #94a3b8; font-size: 13px; position: relative; }
+    .or-divider::before, .or-divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #e2e8f0; }
+    .or-divider::before { left: 0; }
+    .or-divider::after { right: 0; }
+    .btn-manual { width: 100%; padding: 16px 20px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: #fff; cursor: pointer; display: flex; align-items: center; gap: 14px; text-align: left; transition: all 0.2s; }
+    .btn-manual:hover { border-color: #2563eb; background: #f8fafc; }
+    .btn-manual-icon { font-size: 24px; color: #64748b; }
+    .btn-manual strong { display: block; font-size: 15px; color: #1e293b; }
+    .btn-manual small { font-size: 12px; color: #94a3b8; }
+    .field-select { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: #fff; }
+    .field-select:focus { border-color: #2563eb; }
+
     @media (max-width: 600px) { .page { padding: 16px 12px 40px; } .card { padding: 20px; } .row2 { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -134,13 +147,23 @@
       <div class="card">
         <div class="logo">Printfly AI Tool Registry</div>
         <h1>Register Your Tool</h1>
-        <p class="subtitle">Drop your project folder. We'll figure out the rest.</p>
+        <p class="subtitle">Add your tool to the company registry so others can find and use it.</p>
 
-        <div class="dropzone" id="dropzone">
-          <div class="dropzone-icon">&#128193;</div>
-          <div class="dropzone-text">Drop your project folder here</div>
-          <div class="dropzone-hint">or click to browse</div>
-          <input type="file" id="folderInput" webkitdirectory multiple>
+        <div id="entryChoice">
+          <div class="dropzone" id="dropzone">
+            <div class="dropzone-icon">&#128193;</div>
+            <div class="dropzone-text">Drop your project folder here</div>
+            <div class="dropzone-hint">or click to browse — best for local scripts, Node/Python projects, etc.</div>
+            <input type="file" id="folderInput" webkitdirectory multiple>
+          </div>
+          <div class="or-divider"><span>or</span></div>
+          <button class="btn-manual" onclick="startManual()">
+            <span class="btn-manual-icon">&#9998;</span>
+            <span>
+              <strong>Register manually</strong>
+              <small>For GPTs, AI Studio, Zapier, deployed apps, or anything without a local folder</small>
+            </span>
+          </button>
         </div>
 
         <div class="scanning" id="scanning">
@@ -164,8 +187,28 @@
             <textarea id="rDesc"></textarea>
           </div>
           <div class="row2">
-            <div class="field"><label>Type</label><div class="field-value" id="rType"></div></div>
-            <div class="field"><label>Status</label><div class="field-value" id="rStatus"></div></div>
+            <div class="field">
+              <label>Type</label>
+              <select id="rType" class="field-select">
+                <option value="Script">Script (Python, Node, Apps Script)</option>
+                <option value="GPT">Custom GPT</option>
+                <option value="Claude Project">Claude Project</option>
+                <option value="AI Studio">Google AI Studio</option>
+                <option value="Automation">Automation (Zapier, Make, n8n)</option>
+                <option value="App">Standalone App</option>
+                <option value="Integration">Integration</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select id="rStatus" class="field-select">
+                <option value="Active">Active</option>
+                <option value="Prototype">Prototype</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Deprecated">Deprecated</option>
+              </select>
+            </div>
           </div>
           <div class="field">
             <label>Use Cases</label>
@@ -312,6 +355,30 @@
       ));
     }
 
+    // ==================== REGISTER: MANUAL MODE ====================
+    function startManual() {
+      document.getElementById('entryChoice').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('uploadToggle').style.display = 'none';
+      document.getElementById('rName').value = '';
+      document.getElementById('rDesc').value = '';
+      document.getElementById('rType').value = 'GPT';
+      document.getElementById('rStatus').value = 'Active';
+      document.getElementById('rUseCases').value = '';
+      document.getElementById('rLink').value = '';
+      document.getElementById('rLink').placeholder = 'Paste the URL — ChatGPT link, AI Studio link, app URL, etc.';
+      document.getElementById('rDocs').value = '';
+      document.getElementById('apiLabel').style.display = 'none';
+      document.getElementById('apiList').innerHTML = '';
+      allFiles = [];
+      detected = { apis: [], apiAccess: {} };
+
+      // Show manual API input
+      const apiList = document.getElementById('apiList');
+      apiList.innerHTML = '<div class="field"><label>APIs / Integrations</label><input type="text" id="rApisManual" placeholder="e.g. Shopify API, Google Sheets — or leave blank"></div>';
+      document.getElementById('apiLabel').style.display = 'block';
+    }
+
     // ==================== REGISTER: DROP ZONE ====================
     const dropzone = document.getElementById('dropzone');
     const folderInput = document.getElementById('folderInput');
@@ -342,7 +409,7 @@
 
     // ==================== REGISTER: SCAN ====================
     async function scanFiles(files) {
-      dropzone.style.display = 'none';
+      document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('scanning').style.display = 'block';
 
       const textFiles = {};
@@ -421,14 +488,17 @@
 
       // Render
       document.getElementById('scanning').style.display = 'none';
+      document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('results').style.display = 'block';
       document.getElementById('uploadToggle').style.display = 'block';
       document.getElementById('rName').value = name;
       document.getElementById('rDesc').value = description;
-      document.getElementById('rType').textContent = toolType;
-      document.getElementById('rStatus').textContent = status;
+      document.getElementById('rType').value = toolType;
+      document.getElementById('rStatus').value = status;
       document.getElementById('rUseCases').value = useCases;
       document.getElementById('rDocs').value = linkToDocs;
+      document.getElementById('rLink').placeholder = 'Auto-filled if pushed to GitHub';
+      document.getElementById('apiLabel').style.display = 'block';
 
       const apiList = document.getElementById('apiList');
       apiList.innerHTML = '';
@@ -468,11 +538,17 @@
       btn.textContent = shouldUpload ? 'Uploading to GitHub & registering...' : 'Submitting...';
       document.getElementById('errorMsg').style.display = 'none';
 
-      let apiStr = detected.apis.map(api => {
-        const info = detected.apiAccess[api] || {};
-        if (info.mode === 'shared') return api + ' (shared)';
-        return info.instructions ? api + ' (per-user: ' + info.instructions + ')' : api + ' (per-user)';
-      }).join(', ');
+      let apiStr = '';
+      const manualApis = document.getElementById('rApisManual');
+      if (manualApis) {
+        apiStr = manualApis.value.trim();
+      } else {
+        apiStr = detected.apis.map(api => {
+          const info = detected.apiAccess[api] || {};
+          if (info.mode === 'shared') return api + ' (shared)';
+          return info.instructions ? api + ' (per-user: ' + info.instructions + ')' : api + ' (per-user)';
+        }).join(', ');
+      }
 
       const toolName = document.getElementById('rName').value.trim();
       const payload = {
@@ -480,10 +556,10 @@
         owner: owner,
         description: document.getElementById('rDesc').value.trim(),
         useCases: document.getElementById('rUseCases').value.trim(),
-        type: document.getElementById('rType').textContent.trim(),
+        type: document.getElementById('rType').value.trim(),
         apis: apiStr,
         scopes: '',
-        status: document.getElementById('rStatus').textContent.trim(),
+        status: document.getElementById('rStatus').value.trim(),
         linkToTool: document.getElementById('rLink').value.trim(),
         linkToDocs: document.getElementById('rDocs').value.trim(),
         forkOf: ''
@@ -524,6 +600,7 @@
     }
 
     function resetRegister() {
+      document.getElementById('entryChoice').style.display = '';
       document.getElementById('dropzone').style.display = '';
       document.getElementById('scanning').style.display = 'none';
       document.getElementById('results').style.display = 'none';
