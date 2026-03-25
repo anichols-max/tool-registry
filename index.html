@@ -666,11 +666,12 @@
     function submitTool() {
       const btn = document.getElementById('submitBtn');
       const owner = document.getElementById('ownerInput').value.trim();
+      const toolName = document.getElementById('rName').value.trim();
+      if (!toolName) { document.getElementById('rName').style.borderColor = '#dc2626'; document.getElementById('rName').focus(); return; }
       if (!owner) { document.getElementById('ownerInput').style.borderColor = '#dc2626'; document.getElementById('ownerInput').focus(); return; }
 
       btn.disabled = true;
-      const shouldUpload = document.getElementById('uploadCheck') && document.getElementById('uploadCheck').checked;
-      btn.textContent = shouldUpload ? 'Uploading to GitHub & registering...' : 'Submitting...';
+      btn.textContent = 'Submitting...';
       document.getElementById('errorMsg').style.display = 'none';
 
       let apiStr = '';
@@ -685,7 +686,6 @@
         }).join(', ');
       }
 
-      const toolName = document.getElementById('rName').value.trim();
       const payload = {
         toolName: toolName,
         owner: owner,
