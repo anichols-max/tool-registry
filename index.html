@@ -215,8 +215,12 @@
             <textarea id="rDesc" placeholder="One or two sentences"></textarea>
           </div>
           <div class="field">
-            <label>Link</label>
-            <input type="text" id="rLink" placeholder="GitHub, ChatGPT, AI Studio, any URL">
+            <label>Link to Tool</label>
+            <input type="text" id="rLink" placeholder="Where people USE it — deployed URL, ChatGPT link, AI Studio, etc.">
+          </div>
+          <div class="field" id="repoField" style="display:none">
+            <label>Source / Repo</label>
+            <input type="text" id="rRepo" placeholder="GitHub repo URL">
           </div>
 
           <div class="more-toggle" onclick="toggleMore()">
@@ -363,9 +367,15 @@
       }
       el.innerHTML = tools.map(t => {
         const badgeClass = t.status === 'Active' ? 'badge-active' : t.status === 'Prototype' ? 'badge-prototype' : t.status === 'In Progress' ? 'badge-progress' : 'badge-deprecated';
-        const nameHtml = t.link ? `<a href="${t.link}" target="_blank">${t.name}</a>` : t.name;
+        const toolUrl = t.link || t.docs || '';
+        const isGitHub = /github\.com/i.test(t.docs);
+        const nameHtml = toolUrl ? `<a href="${toolUrl}" target="_blank">${t.name}</a>` : t.name;
         const useCases = t.useCases ? t.useCases.split(',').map(u => `<span class="tool-tag">${u.trim()}</span>`).join('') : '';
         const apisHtml = t.apis ? `<div class="tool-apis">APIs: ${t.apis}</div>` : '';
+        // Show source/repo link separately from tool link
+        const docsLink = t.docs && isGitHub
+          ? `<span><a href="${t.docs}" target="_blank" style="color:#2563eb;text-decoration:none;">Source</a></span>`
+          : t.docs ? `<span><a href="${t.docs}" target="_blank" style="color:#2563eb;text-decoration:none;">Docs</a></span>` : '';
         return `<div class="tool-card">
           <div class="tool-header">
             <div class="tool-name">${nameHtml}</div>
@@ -375,7 +385,7 @@
           <div class="tool-meta">
             <span>By ${t.owner || 'Unknown'}</span>
             <span>${t.type || ''}</span>
-            ${t.docs ? `<span><a href="${t.docs}" target="_blank" style="color:#2563eb;text-decoration:none;">Docs</a></span>` : ''}
+            ${docsLink}
           </div>
           ${useCases ? `<div class="tool-tags">${useCases}</div>` : ''}
           ${apisHtml}
@@ -482,7 +492,8 @@
           showForm({
             name: prettify(repo.name || ''),
             desc: repo.description || '',
-            link: repo.html_url || url,
+            link: repo.homepage || '',  // GitHub "Website" field = the actual tool URL
+            repo: repo.html_url || url,
             docs: repo.html_url + '#readme',
             type: toolType,
             status: repo.archived ? 'Deprecated' : 'Active',
@@ -496,7 +507,7 @@
           setTimeout(() => {
             status.style.display = 'none';
             const slug = prettify(nameFromUrl(url));
-            showForm({ name: slug, link: url, type: 'Script' });
+            showForm({ name: slug, repo: url, type: 'Script' });
           }, 1500);
         }
         return;
@@ -519,6 +530,14 @@
       document.getElementById('rUseCases').value = opts.useCases || '';
       document.getElementById('rLink').value = opts.link || '';
       document.getElementById('rDocs').value = opts.docs || '';
+      // Repo field
+      if (opts.repo) {
+        document.getElementById('rRepo').value = opts.repo;
+        document.getElementById('repoField').style.display = 'block';
+      } else {
+        document.getElementById('rRepo').value = '';
+        document.getElementById('repoField').style.display = 'none';
+      }
       const manualApi = document.getElementById('rApisManual');
       if (manualApi) manualApi.value = opts.apis || '';
       allFiles = [];
@@ -680,7 +699,7 @@
         scopes: '',
         status: document.getElementById('rStatus').value.trim(),
         linkToTool: document.getElementById('rLink').value.trim(),
-        linkToDocs: document.getElementById('rDocs').value.trim(),
+        linkToDocs: document.getElementById('rRepo').value.trim() || document.getElementById('rDocs').value.trim(),
         forkOf: ''
       };
 
@@ -718,9 +737,11 @@
       document.getElementById('scanning').style.display = 'none';
       document.getElementById('results').style.display = 'none';
       document.getElementById('uploadToggle').style.display = 'none';
+      document.getElementById('repoField').style.display = 'none';
       document.getElementById('success').style.display = 'none';
       document.getElementById('submitBtn').disabled = false;
       document.getElementById('submitBtn').textContent = 'Submit to Registry';
+      document.getElementById('urlInput').value = '';
       document.getElementById('folderInput').value = '';
       allFiles = []; detected = { apis: [], apiAccess: {} };
     }
