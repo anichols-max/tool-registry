@@ -83,51 +83,63 @@
 
     /* Browse */
     .browse-loading { text-align: center; padding: 40px; color: #64748b; }
-    .tool-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 20px 24px; margin-bottom: 12px; transition: box-shadow 0.2s; }
-    .tool-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-    .tool-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .tool-name { font-size: 17px; font-weight: 700; }
-    .tool-name a { color: #1e293b; text-decoration: none; }
-    .tool-name a:hover { color: #2563eb; }
-    .tool-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .browse-page { max-width: 800px; margin: 0 auto; padding: 24px 20px 60px; }
+    .tool-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding: 0; margin-bottom: 14px; overflow: hidden; transition: box-shadow 0.2s, transform 0.15s; }
+    .tool-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
+    .tool-card-body { padding: 20px 24px; }
+    .tool-top { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+    .tool-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: #fff; font-weight: 700; }
+    .icon-gpt { background: linear-gradient(135deg, #10a37f, #1a7f64); }
+    .icon-claude { background: linear-gradient(135deg, #d97706, #b45309); }
+    .icon-aistudio { background: linear-gradient(135deg, #4285f4, #1a73e8); }
+    .icon-script { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+    .icon-automation { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .icon-app { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+    .icon-integration { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .icon-other { background: linear-gradient(135deg, #64748b, #475569); }
+    .tool-info { flex: 1; min-width: 0; }
+    .tool-name { font-size: 17px; font-weight: 700; color: #1e293b; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tool-type-label { font-size: 12px; color: #94a3b8; font-weight: 500; }
+    .tool-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
     .badge-active { background: #dcfce7; color: #16a34a; }
     .badge-prototype { background: #fef9c3; color: #a16207; }
     .badge-progress { background: #dbeafe; color: #2563eb; }
     .badge-deprecated { background: #f1f5f9; color: #64748b; }
-    .tool-desc { font-size: 14px; color: #475569; margin-bottom: 10px; line-height: 1.4; }
-    .tool-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: #94a3b8; }
-    .tool-meta span { display: flex; align-items: center; gap: 4px; }
-    .tool-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .tool-desc { font-size: 14px; color: #475569; margin-bottom: 14px; line-height: 1.5; }
+    .tool-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .tool-action { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: all 0.15s; }
+    .tool-action-primary { background: #2563eb; color: #fff; }
+    .tool-action-primary:hover { background: #1d4ed8; }
+    .tool-action-secondary { background: #f1f5f9; color: #475569; }
+    .tool-action-secondary:hover { background: #e2e8f0; }
+    .tool-action-gpt { background: #10a37f; color: #fff; }
+    .tool-action-gpt:hover { background: #0d8c6c; }
+    .tool-action-claude { background: #d97706; color: #fff; }
+    .tool-action-claude:hover { background: #b45309; }
+    .tool-action-aistudio { background: #4285f4; color: #fff; }
+    .tool-action-aistudio:hover { background: #1a73e8; }
+    .tool-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; font-size: 12px; color: #94a3b8; }
+    .tool-footer span { display: flex; align-items: center; gap: 4px; }
+    .tool-footer a { color: #64748b; text-decoration: none; }
+    .tool-footer a:hover { color: #2563eb; }
+    .tool-tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .tool-tag { font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; }
-    .tool-apis { margin-top: 8px; font-size: 12px; color: #64748b; }
     .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
     .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: #64748b; }
     .search-bar { margin-bottom: 20px; }
-    .search-bar input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; font-family: inherit; }
+    .search-bar input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; outline: none; font-family: inherit; background: #fff; }
     .search-bar input:focus { border-color: #2563eb; }
+    .filter-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; transition: all 0.15s; }
+    .filter-chip:hover { border-color: #2563eb; color: #2563eb; }
+    .filter-chip.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
 
-    /* URL entry */
-    .url-entry { margin-bottom: 0; }
-    .url-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-    .url-row { display: flex; gap: 8px; }
-    .url-input { flex: 1; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
-    .url-input:focus { border-color: #2563eb; }
-    .url-btn { flex-shrink: 0; padding: 11px 20px; }
-    .url-hint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+    /* URL inside drop zone */
+    .drop-url-input { display: block; width: 80%; margin: 14px auto 0; padding: 9px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; text-align: center; background: #fff; }
+    .drop-url-input:focus { border-color: #2563eb; }
     .url-status { font-size: 13px; margin-top: 8px; display: none; padding: 8px 12px; border-radius: 8px; }
     .url-status.loading { display: block; background: #f0f9ff; color: #2563eb; }
     .url-status.error { display: block; background: #fef2f2; color: #dc2626; }
-
-    /* Manual entry */
-    .or-divider { text-align: center; margin: 16px 0; color: #94a3b8; font-size: 13px; position: relative; }
-    .or-divider::before, .or-divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #e2e8f0; }
-    .or-divider::before { left: 0; }
-    .or-divider::after { right: 0; }
-    .btn-manual { width: 100%; padding: 16px 20px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: #fff; cursor: pointer; display: flex; align-items: center; gap: 14px; text-align: left; transition: all 0.2s; }
-    .btn-manual:hover { border-color: #2563eb; background: #f8fafc; }
-    .btn-manual-icon { font-size: 24px; color: #64748b; }
-    .btn-manual strong { display: block; font-size: 15px; color: #1e293b; }
-    .btn-manual small { font-size: 12px; color: #94a3b8; }
     .field-select { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: #fff; }
     .field-select:focus { border-color: #2563eb; }
     .more-toggle { padding: 10px 0; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; user-select: none; }
@@ -149,10 +161,11 @@
 
   <!-- ==================== BROWSE TAB ==================== -->
   <div class="tab-content active" id="tab-browse">
-    <div class="page">
+    <div class="browse-page">
       <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Search tools, APIs, use cases..." oninput="filterTools()">
       </div>
+      <div class="filter-bar" id="filterBar"></div>
       <div id="toolsList">
         <div class="browse-loading"><div class="spinner"></div>Loading registry...</div>
       </div>
@@ -168,30 +181,14 @@
         <p class="subtitle">Add your tool to the company registry so others can find and use it.</p>
 
         <div id="entryChoice">
-          <div class="url-entry">
-            <label class="url-label">Paste a link to your tool</label>
-            <div class="url-row">
-              <input type="text" id="urlInput" class="url-input" placeholder="GitHub repo, ChatGPT link, AI Studio, Zapier, any URL...">
-              <button class="btn btn-primary url-btn" onclick="fetchFromUrl()">Go</button>
-            </div>
-            <div class="url-hint">GitHub repos auto-fill details. Other links detect the platform.</div>
-            <div class="url-status" id="urlStatus"></div>
-          </div>
-          <div class="or-divider"><span>or</span></div>
           <div class="dropzone" id="dropzone">
             <div class="dropzone-icon">&#128193;</div>
-            <div class="dropzone-text">Drop your project folder here</div>
-            <div class="dropzone-hint">or click to browse — for local code projects</div>
+            <div class="dropzone-text">Drop your project here</div>
+            <div class="dropzone-hint">Folder, files, or paste a link — we'll figure it out</div>
+            <input type="text" id="urlInput" class="drop-url-input" placeholder="or paste a URL and hit Enter" onclick="event.stopPropagation()">
             <input type="file" id="folderInput" webkitdirectory multiple>
           </div>
-          <div class="or-divider"><span>or</span></div>
-          <button class="btn-manual" onclick="startManual()">
-            <span class="btn-manual-icon">&#9998;</span>
-            <span>
-              <strong>Register manually</strong>
-              <small>No link or folder? Just fill in the fields.</small>
-            </span>
-          </button>
+          <div class="url-status" id="urlStatus"></div>
         </div>
 
         <div class="scanning" id="scanning">
@@ -325,6 +322,7 @@
     function loadTools() {
       fetch(SHEET_CSV).then(r => r.text()).then(csv => {
         allTools = parseCSV(csv);
+        buildFilterBar(allTools);
         renderTools(allTools);
       }).catch(() => {
         document.getElementById('toolsList').innerHTML = '<div class="empty-state"><h3>Could not load registry</h3><p>Check that the sheet is shared publicly.</p></div>';
@@ -359,46 +357,131 @@
       return result;
     }
 
+    let activeFilter = 'All';
+
+    function getIconClass(type) {
+      const t = (type || '').toLowerCase();
+      if (t.includes('gpt')) return 'icon-gpt';
+      if (t.includes('claude')) return 'icon-claude';
+      if (t.includes('ai studio')) return 'icon-aistudio';
+      if (t.includes('script')) return 'icon-script';
+      if (t.includes('automation')) return 'icon-automation';
+      if (t.includes('app')) return 'icon-app';
+      if (t.includes('integration')) return 'icon-integration';
+      return 'icon-other';
+    }
+
+    function getIconEmoji(type) {
+      const t = (type || '').toLowerCase();
+      if (t.includes('gpt')) return 'G';
+      if (t.includes('claude')) return 'C';
+      if (t.includes('ai studio')) return 'AI';
+      if (t.includes('script')) return '{}';
+      if (t.includes('automation')) return 'Z';
+      if (t.includes('app')) return 'A';
+      if (t.includes('integration')) return 'I';
+      return '?';
+    }
+
+    function getActionButton(tool) {
+      const url = tool.link;
+      const type = (tool.type || '').toLowerCase();
+      if (!url) return '<span class="tool-action tool-action-secondary" style="opacity:0.5;cursor:default;">No link yet</span>';
+
+      if (type.includes('gpt'))
+        return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-gpt">Open in ChatGPT</a>`;
+      if (type.includes('claude'))
+        return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-claude">Open in Claude</a>`;
+      if (type.includes('ai studio'))
+        return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-aistudio">Open in AI Studio</a>`;
+      if (type.includes('automation'))
+        return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open Automation</a>`;
+      if (type.includes('app'))
+        return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open App</a>`;
+
+      // Default: generic open
+      return `<a href="${esc(url)}" target="_blank" class="tool-action tool-action-primary">Open Tool</a>`;
+    }
+
+    function esc(str) {
+      const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+    }
+
+    function buildFilterBar(tools) {
+      const types = new Set(tools.map(t => t.type).filter(Boolean));
+      const bar = document.getElementById('filterBar');
+      let html = '<button class="filter-chip active" onclick="setFilter(\'All\', this)">All</button>';
+      types.forEach(t => {
+        html += `<button class="filter-chip" onclick="setFilter('${esc(t)}', this)">${esc(t)}</button>`;
+      });
+      bar.innerHTML = html;
+    }
+
+    function setFilter(type, el) {
+      activeFilter = type;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      filterTools();
+    }
+
     function renderTools(tools) {
       const el = document.getElementById('toolsList');
       if (!tools.length) {
-        el.innerHTML = '<div class="empty-state"><h3>No tools registered yet</h3><p>Be the first — switch to the Register tab.</p></div>';
+        el.innerHTML = '<div class="empty-state"><h3>No tools found</h3><p>Try a different search, or register a new tool.</p></div>';
         return;
       }
       el.innerHTML = tools.map(t => {
         const badgeClass = t.status === 'Active' ? 'badge-active' : t.status === 'Prototype' ? 'badge-prototype' : t.status === 'In Progress' ? 'badge-progress' : 'badge-deprecated';
-        const toolUrl = t.link || t.docs || '';
+        const iconClass = getIconClass(t.type);
+        const iconText = getIconEmoji(t.type);
+        const actionBtn = getActionButton(t);
         const isGitHub = /github\.com/i.test(t.docs);
-        const nameHtml = toolUrl ? `<a href="${toolUrl}" target="_blank">${t.name}</a>` : t.name;
         const useCases = t.useCases ? t.useCases.split(',').map(u => `<span class="tool-tag">${u.trim()}</span>`).join('') : '';
-        const apisHtml = t.apis ? `<div class="tool-apis">APIs: ${t.apis}</div>` : '';
-        // Show source/repo link separately from tool link
-        const docsLink = t.docs && isGitHub
-          ? `<span><a href="${t.docs}" target="_blank" style="color:#2563eb;text-decoration:none;">Source</a></span>`
-          : t.docs ? `<span><a href="${t.docs}" target="_blank" style="color:#2563eb;text-decoration:none;">Docs</a></span>` : '';
+
+        const secondaryLinks = [];
+        if (t.docs && isGitHub) secondaryLinks.push(`<a href="${esc(t.docs)}" target="_blank" class="tool-action tool-action-secondary">View Source</a>`);
+        else if (t.docs) secondaryLinks.push(`<a href="${esc(t.docs)}" target="_blank" class="tool-action tool-action-secondary">Docs</a>`);
+
+        const footerParts = [];
+        footerParts.push(`<span>By ${esc(t.owner || 'Unknown')}</span>`);
+        if (t.apis) footerParts.push(`<span>APIs: ${esc(t.apis)}</span>`);
+
         return `<div class="tool-card">
-          <div class="tool-header">
-            <div class="tool-name">${nameHtml}</div>
-            <span class="tool-badge ${badgeClass}">${t.status || 'Unknown'}</span>
+          <div class="tool-card-body">
+            <div class="tool-top">
+              <div class="tool-icon ${iconClass}">${iconText}</div>
+              <div class="tool-info">
+                <div class="tool-name">${esc(t.name)}</div>
+                <div class="tool-type-label">${esc(t.type || 'Tool')}</div>
+              </div>
+              <span class="tool-badge ${badgeClass}">${esc(t.status || 'Unknown')}</span>
+            </div>
+            <div class="tool-desc">${esc(t.description || 'No description')}</div>
+            <div class="tool-actions">
+              ${actionBtn}
+              ${secondaryLinks.join('')}
+            </div>
+            <div class="tool-footer">
+              ${footerParts.join('')}
+              ${useCases ? `<div class="tool-tags">${useCases}</div>` : ''}
+            </div>
           </div>
-          <div class="tool-desc">${t.description || 'No description'}</div>
-          <div class="tool-meta">
-            <span>By ${t.owner || 'Unknown'}</span>
-            <span>${t.type || ''}</span>
-            ${docsLink}
-          </div>
-          ${useCases ? `<div class="tool-tags">${useCases}</div>` : ''}
-          ${apisHtml}
         </div>`;
       }).join('');
     }
 
     function filterTools() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      if (!q) { renderTools(allTools); return; }
-      renderTools(allTools.filter(t =>
-        (t.name + t.description + t.useCases + t.apis + t.owner + t.type).toLowerCase().includes(q)
-      ));
+      let filtered = allTools;
+      if (activeFilter !== 'All') {
+        filtered = filtered.filter(t => t.type === activeFilter);
+      }
+      if (q) {
+        filtered = filtered.filter(t =>
+          (t.name + t.description + t.useCases + t.apis + t.owner + t.type).toLowerCase().includes(q)
+        );
+      }
+      renderTools(filtered);
     }
 
     // ==================== REGISTER: HELPERS ====================
