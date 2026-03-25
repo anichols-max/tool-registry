@@ -626,7 +626,6 @@
       document.getElementById('entryChoice').style.display = 'none';
       document.getElementById('results').style.display = 'block';
       document.getElementById('resultsLabel').textContent = 'Detected';
-      document.getElementById('uploadToggle').style.display = 'block';
       document.getElementById('rName').value = name;
       document.getElementById('rDesc').value = description;
       document.getElementById('rType').value = toolType;
@@ -701,10 +700,8 @@
         forkOf: ''
       };
 
-      if (shouldUpload && allFiles.length > 0) {
-        payload.files = allFiles;
-        payload.repoName = toolName;
-      }
+      // Don't send files to Apps Script — no UrlFetchApp permission
+      // Files stay client-side only for now
 
       fetch(ENDPOINT, {
         method: 'POST',
@@ -718,11 +715,7 @@
           document.getElementById('results').style.display = 'none';
           document.getElementById('uploadToggle').style.display = 'none';
           const msg = document.getElementById('successMsg');
-          if (res.repoUrl) {
-            msg.innerHTML = `Your tool is in the registry and on GitHub:<br><a href="${res.repoUrl}" target="_blank">${res.repoUrl}</a>`;
-          } else {
-            msg.innerHTML = `Your tool is in the registry. <a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View registry</a>`;
-          }
+          msg.innerHTML = `Your tool is in the registry. <a href="https://docs.google.com/spreadsheets/d/1UA_2dtfzXLaIEDEwm_SfWDzEuKRGS1uIFcVdrbIfMpU/edit" target="_blank">View registry</a>`;
           document.getElementById('success').style.display = 'block';
         } else throw new Error(res.message || 'Failed');
       })
