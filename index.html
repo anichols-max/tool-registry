@@ -319,9 +319,10 @@
         const cols = parseCSVLine(lines[i]);
         if (!cols[0]) continue;
         tools.push({
-          name: cols[0], owner: cols[1], description: cols[2], useCases: cols[3],
-          type: cols[4], apis: cols[5], scopes: cols[6], status: cols[7],
-          link: cols[8], docs: cols[9], forkOf: cols[10], dateAdded: cols[11], lastUpdated: cols[12]
+          // Sheet columns: Tool Name(0), Owner(1), Description(2), Type(3), Status(4), Link(5), Date Added(6), Last Updated(7)
+          name: cols[0], owner: cols[1], description: cols[2],
+          type: cols[3], status: cols[4], link: cols[5],
+          dateAdded: cols[6], lastUpdated: cols[7]
         });
       }
       return tools;
@@ -419,19 +420,8 @@
       el.innerHTML = tools.map(t => {
         const badgeClass = t.status === 'Active' ? 'badge-active' : t.status === 'Prototype' ? 'badge-prototype' : t.status === 'In Progress' ? 'badge-progress' : 'badge-deprecated';
         const actionBtn = getActionButton(t);
-        const useCases = t.useCases ? t.useCases.split(',').map(u => `<span class="tool-tag">${u.trim()}</span>`).join('') : '';
-
         const secondaryLinks = [];
-        if (t.docs && /github\.com/i.test(t.docs)) secondaryLinks.push(`<a href="${esc(t.docs)}" target="_blank" class="tool-action tool-action-secondary">Source</a>`);
-        else if (t.docs && t.docs !== 'README.md') secondaryLinks.push(`<a href="${esc(t.docs)}" target="_blank" class="tool-action tool-action-secondary">Docs</a>`);
-
-        // Credential badge
         let credBadge = '';
-        if (t.scopes) {
-          if (t.scopes === 'included') credBadge = '<span style="color:#16a34a;font-size:11px;font-weight:600;">Keys included</span>';
-          else if (t.scopes === 'ask-owner') credBadge = `<span style="color:#d97706;font-size:11px;font-weight:600;">Ask ${esc(t.owner)} for keys</span>`;
-          else if (t.scopes === 'self-service') credBadge = '<span style="color:#2563eb;font-size:11px;font-weight:600;">Bring your own keys</span>';
-        }
 
         return `<div class="tool-card">
           <div class="tool-card-body">
@@ -450,9 +440,7 @@
             </div>
             <div class="tool-footer">
               <span>By ${esc(t.owner || 'Unknown')}</span>
-              ${t.apis ? `<span>APIs: ${esc(t.apis)}</span>` : ''}
               ${credBadge}
-              ${useCases ? `<div class="tool-tags">${useCases}</div>` : ''}
             </div>
           </div>
         </div>`;
@@ -463,7 +451,7 @@
       const q = document.getElementById('searchInput').value.toLowerCase();
       let filtered = allTools;
       if (activeFilter !== 'All') filtered = filtered.filter(t => t.type === activeFilter);
-      if (q) filtered = filtered.filter(t => (t.name + t.description + t.useCases + t.apis + t.owner + t.type).toLowerCase().includes(q));
+      if (q) filtered = filtered.filter(t => (t.name + t.description + t.owner + t.type).toLowerCase().includes(q));
       renderTools(filtered);
     }
 
